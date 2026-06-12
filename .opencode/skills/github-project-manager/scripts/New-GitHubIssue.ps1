@@ -1,30 +1,18 @@
 <#
 .SYNOPSIS
-    Creates a GitHub issue with labels and adds it to a project board.
-
+    Creates a GitHub issue with optional project board add.
 .PARAMETER Owner
-    Repository owner (org or user).
-
+    Repository owner.
 .PARAMETER Repo
     Repository name.
-
 .PARAMETER Title
     Issue title.
-
 .PARAMETER Body
-    Issue body (markdown). Supports real newlines with `n.
-
+    Issue body (markdown). Use `n for newlines.
 .PARAMETER Labels
-    Array of label names. Labels must already exist in the repo.
-
+    Label names (must exist in repo).
 .PARAMETER ProjectId
-    Optional. Project (v2) node ID to add the issue to.
-
-.EXAMPLE
-    New-GitHubIssue -Owner "myorg" -Repo "myrepo" -Title "Fix login" -Body "## Description`nThe login page crashes." -Labels @("bug")
-
-.EXAMPLE
-    New-GitHubIssue -Owner "myorg" -Repo "myrepo" -Title "Epic: Auth" -Body "..." -Labels @("epic") -ProjectId "PVT_kw..."
+    Project v2 node ID to add the issue to (optional).
 #>
 param(
     [Parameter(Mandatory)] [string] $Owner,
@@ -42,7 +30,6 @@ $headers = @{
     "X-GitHub-Api-Version" = "2022-11-28"
 }
 
-# Create issue via REST API to avoid shell quoting issues
 $payload = @{ title = $Title; body = $Body }
 if ($Labels.Count -gt 0) { $payload.labels = $Labels }
 
@@ -51,7 +38,6 @@ $issue = Invoke-RestMethod -Uri "https://api.github.com/repos/$Owner/$Repo/issue
 
 Write-Output $issue
 
-# Add to project board if requested
 if ($ProjectId -and $issue.node_id) {
     $mutation = @{ query = "mutation { addProjectV2ItemById(input: { projectId: `"$ProjectId`" contentId: `"$($issue.node_id)`" }) { item { id } } }" }
     $mutation | ConvertTo-Json -Compress | gh api graphql --input - 2>$null

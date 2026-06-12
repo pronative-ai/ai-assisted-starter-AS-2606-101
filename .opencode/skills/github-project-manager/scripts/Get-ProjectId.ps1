@@ -1,15 +1,10 @@
 <#
 .SYNOPSIS
-    Gets a GitHub Project (v2) node ID by org and project number.
-
+    Gets a GitHub Project v2 node ID by org and project number.
 .PARAMETER OrgName
     Organization name.
-
 .PARAMETER ProjectNumber
-    Project number (find in project URL: /orgs/{org}/projects/{number}).
-
-.EXAMPLE
-    Get-ProjectId -OrgName "myorg" -ProjectNumber 3
+    Project number (from URL: /orgs/{org}/projects/{number}).
 #>
 param(
     [Parameter(Mandatory)] [string] $OrgName,

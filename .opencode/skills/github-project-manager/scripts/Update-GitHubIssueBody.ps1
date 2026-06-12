@@ -1,30 +1,18 @@
 <#
 .SYNOPSIS
-    Updates GitHub issue body with cleaned text.
-
+    Updates or cleans a GitHub issue body.
 .PARAMETER Owner
     Repository owner.
-
 .PARAMETER Repo
     Repository name.
-
 .PARAMETER Number
     Issue number.
-
 .PARAMETER Body
-    New body text (markdown). Replaces the entire body.
-
+    New body text (replaces entirely unless -Append).
 .PARAMETER Append
-    If set, appends to the existing body instead of replacing.
-
+    Appends to existing body instead of replacing.
 .PARAMETER Clean
-    If set, cleans the existing body (removes literal \n artifacts) without changing content.
-
-.EXAMPLE
-    Update-GitHubIssueBody -Owner myorg -Repo myrepo -Number 4 -Body $newBody
-
-.EXAMPLE
-    Update-GitHubIssueBody -Owner myorg -Repo myrepo -Number 4 -Clean
+    Cleans literal \n artifacts from existing body.
 #>
 param(
     [Parameter(Mandatory)] [string] $Owner,
@@ -36,6 +24,17 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+
+function Clean-BodyText {
+    param([string]$Body)
+    $clean = $Body
+    $clean = $clean -replace "`r`n", "`n"
+    $clean = $clean -replace [regex]::Escape('\n'), "`n"
+    $clean = $clean -replace "\\`n", "`n"
+    $clean = $clean -replace "`n`n`n+", "`n`n"
+    return $clean.Trim()
+}
+
 $token = gh auth token 2>$null
 $headers = @{
     "Authorization" = "Bearer $token"
@@ -43,14 +42,11 @@ $headers = @{
     "X-GitHub-Api-Version" = "2022-11-28"
 }
 
-# Read current issue
 $issue = Invoke-RestMethod -Uri "https://api.github.com/repos/$Owner/$Repo/issues/$Number" -Headers $headers -Method Get
 $currentBody = $issue.body
 
 if ($Clean) {
-    # Auto-clean existing body
-    $clean = Clean-BodyText -Body $currentBody
-    $payload = @{ body = $clean }
+    $payload = @{ body = Clean-BodyText -Body $currentBody }
 } elseif ($Append) {
     $payload = @{ body = "$currentBody`n`n$Body" }
 } else {

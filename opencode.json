@@ -1,0 +1,16 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "agent": {
+    "spec-agent": {
+      "description": "Orchestrates Requirements Analysis, Acceptance Criteria, and Solution Architecture specification pipeline with human review checkpoints",
+      "mode": "subagent",
+      "hidden": false
+    }
+  },
+  "permission": {
+    "skill": {
+      "github-project-manager": "allow",
+      "spec": "allow"
+    }
+  }
+}

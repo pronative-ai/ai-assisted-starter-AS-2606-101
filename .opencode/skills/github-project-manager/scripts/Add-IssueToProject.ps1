@@ -1,30 +1,18 @@
 <#
 .SYNOPSIS
-    Adds an existing GitHub issue to a Project (v2) board.
-
+    Adds a GitHub issue to a Project v2 board.
 .PARAMETER Owner
     Repository owner.
-
 .PARAMETER Repo
     Repository name.
-
 .PARAMETER IssueNumber
-    Issue number to add.
-
+    Issue number.
 .PARAMETER ProjectId
-    Project (v2) node ID (e.g., "PVT_kwDOEBDK-s4BaTPH").
-
+    Project v2 node ID (e.g., "PVT_kw...").
 .PARAMETER OrgName
-    Organization name (needed to look up a project by number instead of ID).
-
+    Org name (needed to look up project by number).
 .PARAMETER ProjectNumber
-    Project number (alternative to ProjectId — looks up the ID first).
-
-.EXAMPLE
-    Add-IssueToProject -Owner myorg -Repo myrepo -IssueNumber 4 -ProjectId "PVT_kwDOEBDK-s4BaTPH"
-
-.EXAMPLE
-    Add-IssueToProject -Owner myorg -Repo myrepo -IssueNumber 4 -OrgName myorg -ProjectNumber 3
+    Project number (alternative to ProjectId).
 #>
 param(
     [Parameter(Mandatory)] [string] $Owner,
@@ -37,7 +25,6 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-# Resolve project ID if not provided
 if (-not $ProjectId -and $OrgName -and $ProjectNumber) {
     $queryObj = @{ query = "query { organization(login: `"$OrgName`") { projectV2(number: $ProjectNumber) { id } } }" }
     $json = $queryObj | ConvertTo-Json -Compress | gh api graphql --input - 2>&1
@@ -50,13 +37,11 @@ if (-not $ProjectId) {
     throw "Provide either -ProjectId or both -OrgName and -ProjectNumber"
 }
 
-# Get issue node ID
 $queryObj = @{ query = "query { repository(owner: `"$Owner`", name: `"$Repo`") { issue(number: $IssueNumber) { id } } }" }
 $json = $queryObj | ConvertTo-Json -Compress | gh api graphql --input - 2>&1
 $parsed = $json | ConvertFrom-Json
 $nodeId = $parsed.data.repository.issue.id
 
-# Add to project
 $mutationObj = @{ query = "mutation { addProjectV2ItemById(input: { projectId: `"$ProjectId`" contentId: `"$nodeId`" }) { item { id } } }" }
 $result = $mutationObj | ConvertTo-Json -Compress | gh api graphql --input - 2>&1
 
