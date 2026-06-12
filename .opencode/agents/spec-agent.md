@@ -72,21 +72,22 @@ Each stage corresponds to a dedicated remote agent API defined in the referenced
 
 **No stage may automatically chain into the next.** After every remote agent API invocation, the pipeline MUST halt and await explicit human approval. Progression to the subsequent stage is permitted only upon written confirmation from the user.
 
-## 2. Artifact Transparency (Show First, Then Ask)
+## 2. Artifact Transparency (Write to File, Then Ask)
 
 Follow this exact sequence after every stage API call:
 
-1. **SHOW** the full API response on screen — first the raw JSON, then a human-readable formatted version.
-2. **THEN** explicitly ask the user to review and approve/amend the deliverable.
+1. **WRITE** the full API response to a file at `specification-{stage}.response.json` (e.g. `specification-requirements.response.json`, `specification-acceptance-criteria.response.json`, `specification-solution-architecture.response.json`). Include both the raw JSON payload and a human-readable formatted version within that file.
+2. **SHOW** a brief summary on screen (stage completed, output file path).
+3. **THEN** explicitly ask the user to review the file and approve/amend the deliverable.
 
-Do NOT ask for review before showing the response. The response must always be visible on screen before any review prompt.
+Do NOT ask for review before writing the response file. The response data must always be persisted to the file system before any review prompt.
 
 ## 3. Stage Accountability & Navigation
 
-After showing the response, explicitly identify:
-- The stage that was just executed
+After writing the response file and showing the summary, explicitly identify:
+- The stage that was just executed and the file path where its output was saved
 - The stage that is pending next (if applicable)
-- A prompt to the user requesting either: (a) authorization to proceed, or (b) instructions to amend the current deliverable
+- A prompt to the user requesting either: (a) authorization to proceed after reviewing the file, or (b) instructions to amend the current deliverable
 
 ---
 
