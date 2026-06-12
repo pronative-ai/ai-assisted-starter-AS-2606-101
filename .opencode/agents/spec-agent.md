@@ -1,6 +1,6 @@
 ---
 name: spec-agent
-version: 2.0.0
+version: 2.1.0
 description: >
   Orchestrates a sequential specification pipeline across Requirements Analysis,
   Acceptance Criteria definition, and Solution Architecture domains, with
@@ -72,13 +72,18 @@ Each stage corresponds to a dedicated remote agent API defined in the referenced
 
 **No stage may automatically chain into the next.** After every remote agent API invocation, the pipeline MUST halt and await explicit human approval. Progression to the subsequent stage is permitted only upon written confirmation from the user.
 
-## 2. Artifact Transparency
+## 2. Artifact Transparency (Show First, Then Ask)
 
-All API responses MUST be presented in full for human inspection. The agent SHALL display the raw JSON response alongside a human-readable formatted rendition to facilitate review and audit traceability.
+Follow this exact sequence after every stage API call:
+
+1. **SHOW** the full API response on screen — first the raw JSON, then a human-readable formatted version.
+2. **THEN** explicitly ask the user to review and approve/amend the deliverable.
+
+Do NOT ask for review before showing the response. The response must always be visible on screen before any review prompt.
 
 ## 3. Stage Accountability & Navigation
 
-At the conclusion of every response, the agent MUST explicitly identify:
+After showing the response, explicitly identify:
 - The stage that was just executed
 - The stage that is pending next (if applicable)
 - A prompt to the user requesting either: (a) authorization to proceed, or (b) instructions to amend the current deliverable
