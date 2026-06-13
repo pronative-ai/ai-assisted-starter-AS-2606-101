@@ -91,23 +91,36 @@ The Epic body MUST include a story checklist (e.g., `- [ ] #2 Request count disp
    | | `specification-2.response.json` | `definition_of_done[]` | Definition of Done |
    | | — | parent Epic number | `Epic: #<epic-number>` |
    | | — | compiled child issue numbers | Task Checklist |
-   | **Task** (per slice) | `specification-3.response.json` | `implementation_slices[n].title`, `.description` | Title & Description |
-   | | `specification-3.response.json` | `implementation_slices[n].related_acceptance_criteria[]`, `.suggested_order` | Slice Metadata |
-   | | `specification-3.response.json` | `component_model[]`, `api_boundary_guidance[]`, `data_model_guidance[]` | Architecture Context |
-   | | — | parent User Story number | `Story: #<story-number>` |
+| **Task** (per slice) | `specification-3.response.json` | `implementation_slices[n].title`, `.description` | Title & Description |
+| | `specification-2.response.json` | `acceptance_criteria[]` (filtered by slice) | Acceptance Criteria (inline, not by reference ID) |
+| | `specification-3.response.json` | `implementation_slices[n].related_acceptance_criteria[]`, `.suggested_order` | Slice Metadata |
+| | `specification-3.response.json` | `component_model[]`, `api_boundary_guidance[]`, `data_model_guidance[]` | Architecture Context |
+| | — | parent User Story number | `Story: #<story-number>` |
 
    The compiled `issue-manifest.md` must contain the full rendered body for each issue.
 
 4. Propagate issues to GitHub using the [github-project-manager](../github-project-manager/SKILL.md) scripts (GitHub operations only — this skill handles all ADLC API calls):
 
    ```powershell
+   # Dot-source the scripts (each defines a function with the same name)
    . .opencode/skills/github-project-manager/scripts/New-GitHubIssue.ps1
    . .opencode/skills/github-project-manager/scripts/Update-GitHubIssueBody.ps1
+   . .opencode/skills/github-project-manager/scripts/Get-ProjectId.ps1
+   . .opencode/skills/github-project-manager/scripts/Add-IssueToProject.ps1
    ```
+
+   > **⚠️ Body content from heredocs**: PowerShell heredocs (`@' '@`) do NOT pipe reliably to `gh issue create --body-file -`. Always write body content to a temp file and pass it via `@`file or use `gh api --field body=@tempFile`:
+   > ```powershell
+   > $tempFile = [System.IO.Path]::GetTempFileName()
+   > $body | Out-File -FilePath $tempFile -Encoding utf8
+   > gh api "repos/$Owner/$Repo/issues" --method POST --field "title=$Title" --field "body=@$tempFile" --field "labels[]=$Label"
+   > Remove-Item -LiteralPath $tempFile -Force
+   > ```
+   > Or use `Invoke-RestMethod` (REST API) directly to avoid shell quoting issues altogether.
 
    a. Create the **Epic** issue with its compiled body — capture its issue number
    b. Create each **User Story** issue with `Epic: #<epic-number>` in body — capture its issue number
-   c. Create each **Task** issue with `Story: #<story-number>` in body
+   c. Create each **Task** issue with `Story: #<story-number>` in body — each Task MUST include acceptance criteria inline (full text, not just IDs)
    d. Update the Epic body with the story checklist (e.g., `- [ ] #2 User story title`)
    e. Update the User Story body with the task checklist (e.g., `- [ ] #4 JSX change`)
    f. Add all issues to the project board (see [Get-ProjectId](../github-project-manager/SKILL.md#scripts) / [Add-IssueToProject](../github-project-manager/SKILL.md#scripts))

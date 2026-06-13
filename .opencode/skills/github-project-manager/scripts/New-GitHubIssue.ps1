@@ -14,32 +14,55 @@
 .PARAMETER ProjectId
     Project v2 node ID to add the issue to (optional).
 #>
+[CmdletBinding()]
 param(
-    [Parameter(Mandatory)] [string] $Owner,
-    [Parameter(Mandatory)] [string] $Repo,
-    [Parameter(Mandatory)] [string] $Title,
-    [Parameter(Mandatory)] [string] $Body,
+    [string] $Owner,
+    [string] $Repo,
+    [string] $Title,
+    [string] $Body,
     [string[]] $Labels = @(),
     [string] $ProjectId = ""
 )
 
-$ErrorActionPreference = "Stop"
-$headers = @{
-    "Authorization" = "Bearer $(gh auth token 2>$null)"
-    "Accept" = "application/vnd.github+json"
-    "X-GitHub-Api-Version" = "2022-11-28"
+$isDotSourced = $MyInvocation.InvocationName -eq '.'
+
+function New-GitHubIssue {
+    param(
+        [Parameter(Mandatory)] [string] $Owner,
+        [Parameter(Mandatory)] [string] $Repo,
+        [Parameter(Mandatory)] [string] $Title,
+        [Parameter(Mandatory)] [string] $Body,
+        [string[]] $Labels = @(),
+        [string] $ProjectId = ""
+    )
+
+    $ErrorActionPreference = "Stop"
+    $token = gh auth token 2>$null
+    $headers = @{
+        "Authorization" = "Bearer $token"
+        "Accept" = "application/vnd.github+json"
+        "X-GitHub-Api-Version" = "2022-11-28"
+    }
+
+    $payload = @{ title = $Title; body = $Body }
+    if ($Labels.Count -gt 0) { $payload.labels = $Labels }
+
+    $issue = Invoke-RestMethod -Uri "https://api.github.com/repos/$Owner/$Repo/issues" `
+        -Headers $headers -Method Post -Body ($payload | ConvertTo-Json -Depth 3)
+
+    Write-Output $issue
+
+    if ($ProjectId -and $issue.node_id) {
+        $mutation = @{ query = "mutation { addProjectV2ItemById(input: { projectId: `"$ProjectId`" contentId: `"$($issue.node_id)`" }) { item { id } } }" }
+        $mutation | ConvertTo-Json -Compress | gh api graphql --input - 2>$null
+        Write-Output "Added to project: $ProjectId"
+    }
 }
 
-$payload = @{ title = $Title; body = $Body }
-if ($Labels.Count -gt 0) { $payload.labels = $Labels }
-
-$issue = Invoke-RestMethod -Uri "https://api.github.com/repos/$Owner/$Repo/issues" `
-    -Headers $headers -Method Post -Body ($payload | ConvertTo-Json -Depth 3)
-
-Write-Output $issue
-
-if ($ProjectId -and $issue.node_id) {
-    $mutation = @{ query = "mutation { addProjectV2ItemById(input: { projectId: `"$ProjectId`" contentId: `"$($issue.node_id)`" }) { item { id } } }" }
-    $mutation | ConvertTo-Json -Compress | gh api graphql --input - 2>$null
-    Write-Output "Added to project: $ProjectId"
+if (-not $isDotSourced) {
+    if (-not $Owner) { throw "Missing required parameter: Owner" }
+    if (-not $Repo) { throw "Missing required parameter: Repo" }
+    if (-not $Title) { throw "Missing required parameter: Title" }
+    if (-not $Body) { throw "Missing required parameter: Body" }
+    New-GitHubIssue -Owner $Owner -Repo $Repo -Title $Title -Body $Body -Labels $Labels -ProjectId $ProjectId
 }

@@ -16,7 +16,14 @@ Manages GitHub Issues and Projects (v2) via `gh` CLI and REST/GraphQL APIs.
 
 ## Scripts (`.opencode/skills/github-project-manager/scripts/`)
 
-Dot-source first: `. .opencode/skills/github-project-manager/scripts/New-GitHubIssue.ps1`
+Dot-source first to load all functions into your session:
+```powershell
+. .opencode/skills/github-project-manager/scripts/New-GitHubIssue.ps1
+. .opencode/skills/github-project-manager/scripts/Update-GitHubIssueBody.ps1
+. .opencode/skills/github-project-manager/scripts/Add-IssueToProject.ps1
+. .opencode/skills/github-project-manager/scripts/Get-ProjectId.ps1
+```
+Each script supports dual-mode: **dot-sourcing** defines a function; **direct invocation** runs immediately.
 
 | Script | Purpose |
 |--------|---------|
