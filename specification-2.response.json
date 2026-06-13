@@ -1,0 +1,397 @@
+{
+  "stage": 2,
+  "stage_name": "Acceptance Criteria Generation",
+  "status": "success",
+  "source_stage": "specification-1.response.json",
+  "epic_candidate": {
+    "title": "[Epic] Automated FBM Order Fulfillment Pipeline for Amazon.de",
+    "description": "Build an end-to-end automation system that replaces manual VA morning workflows for unshipped FBM orders on Amazon.de. The system syncs orders from Amazon Seller Central, intelligently batches them by SKU quantity and brand, generates pick lists and pack slips as PDFs, produces DHL and Easy Ship shipping labels, prevents duplicate processing, and provides a staff dashboard for monitoring and intervention."
+  },
+  "story_candidate": {
+    "title": "[User Story] Automated Daily FBM Order Processing Pipeline",
+    "persona": "Virtual Assistant / Operations Staff",
+    "story": "As a Virtual Assistant or operations staff member, I want the system to automatically sync, batch, and process all unshipped FBM orders from Amazon.de each morning so that I can save hours of manual work and focus on exceptions and oversight rather than repetitive order processing.",
+    "benefit": "Reduces daily processing time from hours to minutes, eliminates manual errors, and allows staff to focus on exception handling."
+  },
+  "acceptance_criteria": [
+    {
+      "id": "AC-001",
+      "title": "Amazon.de Order Sync Completes Successfully",
+      "related_requirement": "FR-001",
+      "given_when_then": {
+        "given": "the system is configured with valid Amazon.de Seller Central SP-API credentials",
+        "when": "the daily scheduled pipeline executes at the configured morning time",
+        "then": "the system shall retrieve all unshipped FBM orders within the last 24 hours, paginating through results as needed, and log the count of retrieved orders"
+      },
+      "verification": "Check pipeline logs for successful sync completion with order count matching Amazon Seller Central dashboard",
+      "edge_cases": [
+        "No unshipped orders exist — system logs '0 orders retrieved' and skips processing",
+        "API returns rate limit error — system backs off and retries up to 3 times",
+        "API token has expired — system logs authentication failure and sends notification"
+      ]
+    },
+    {
+      "id": "AC-002",
+      "title": "Order Items Retrieved with German Marketplace Details",
+      "related_requirement": "FR-002",
+      "given_when_then": {
+        "given": "the system has retrieved a list of unshipped orders",
+        "when": "processing each order",
+        "then": "the system shall fetch individual order items including SKU, quantity 1–n, unit price, extended price, shipping address (Str., Hausnummer, PLZ, Ort, Land), VAT rate and amount, and any seller notes"
+      },
+      "verification": "Spot-check 5 random orders against Amazon Seller Central order details page",
+      "edge_cases": [
+        "Order has more than 100 line items — system fetches all pages",
+        "Shipping address contains special German characters (ä, ö, ü, ß) — preserved correctly",
+        "VAT is 0% or 19% (German standard) — handled correctly"
+      ]
+    },
+    {
+      "id": "AC-003",
+      "title": "Orders Split into Correct Batch Types",
+      "related_requirement": "FR-003",
+      "given_when_then": {
+        "given": "the system has retrieved order items for all unshipped orders",
+        "when": "the batch splitting algorithm executes",
+        "then": "orders shall be classified into exactly four batch types: (a) Single SKU qty 1, (b) Single SKU qty 2, (c) Single SKU qty 3+, (d) Mixed/multi-line orders with multiple distinct SKUs"
+      },
+      "verification": "For 10 test orders with known compositions, verify each is assigned to the correct batch type",
+      "edge_cases": [
+        "Order with single SKU quantity 0 — excluded as invalid",
+        "Order with single SKU quantity 1 in one line, same SKU quantity 1 in another line — treated as single SKU qty 2 (consolidated)",
+        "Order with 50 distinct SKUs — correctly classified as mixed/multi-line"
+      ]
+    },
+    {
+      "id": "AC-004",
+      "title": "Brand/SKU Group Segregation Applied",
+      "related_requirement": "FR-004",
+      "given_when_then": {
+        "given": "orders have been classified into batch types",
+        "when": "the segregation algorithm runs",
+        "then": "order items within each batch type shall be grouped by brand/SKU group, and items from the same brand shall appear consecutively on pick lists"
+      },
+      "verification": "Inspect generated pick list groupings for correct brand segregation",
+      "edge_cases": [
+        "Brand name contains special characters — handled correctly",
+        "Item has no brand assigned — grouped under 'Uncategorized'",
+        "Only one brand in entire batch — all items in one group"
+      ]
+    },
+    {
+      "id": "AC-005",
+      "title": "Items Correctly Flagged for Review",
+      "related_requirement": "FR-005",
+      "given_when_then": {
+        "given": "the system has processed all order items",
+        "when": "evaluating items against review rules",
+        "then": "items matching any review rule (high-value threshold, unusual address, special handling notes, configurable rules) shall be flagged and excluded from automatic document and label generation"
+      },
+      "verification": "Configure a test review rule (e.g., value > €500), process orders, verify matching items are flagged",
+      "edge_cases": [
+        "All items in an order are flagged — entire order held for review",
+        "Some items flagged, some not — only non-flagged items proceed",
+        "Review rules configuration is empty — no items flagged"
+      ]
+    },
+    {
+      "id": "AC-006",
+      "title": "Pick List PDF Generated and Correct",
+      "related_requirement": "FR-006",
+      "given_when_then": {
+        "given": "the system has batched and segregated orders",
+        "when": "the pick list generation executes",
+        "then": "a PDF pick list shall be generated for each batch/brand group containing: item locations, quantities to pick, order references, and batch metadata. The PDF shall be printable on A4 paper."
+      },
+      "verification": "Open generated PDF and verify content includes all required fields; print test to confirm A4 compatibility",
+      "edge_cases": [
+        "Batch has 0 items — no pick list generated (logged as 'empty batch')",
+        "Batch has 500+ items — pick list spans multiple pages with page numbers",
+        "Item location data missing — shows 'Location not set'"
+      ]
+    },
+    {
+      "id": "AC-007",
+      "title": "Pack Slip PDF Generated Per Order",
+      "related_requirement": "FR-007",
+      "given_when_then": {
+        "given": "the system has prepared orders for fulfillment",
+        "when": "pack slip generation executes",
+        "then": "a PDF pack slip shall be generated for each order containing: item details with quantities, customer shipping address in German format (Name, Straße, PLZ Ort, Land), order ID, date, and a barcode/QR code for tracking"
+      },
+      "verification": "Verify pack slip PDF contains correct item details and German-formatted address for 5 test orders",
+      "edge_cases": [
+        "Shipping address contains a Packstation or Postfach — format preserved correctly",
+        "Order has 1 item — pack slip still generated as single-page PDF",
+        "Customer name contains umlauts — displayed correctly in PDF"
+      ]
+    },
+    {
+      "id": "AC-008",
+      "title": "Duplicate SKU Consolidation",
+      "related_requirement": "FR-008",
+      "given_when_then": {
+        "given": "an order contains multiple line items for the same SKU",
+        "when": "generating pick lists and pack slips",
+        "then": "the system shall display the SKU once with the total consolidated quantity rather than as separate lines"
+      },
+      "verification": "Create test order with 3 line items of the same SKU (qty 1 each), verify pick list shows 1 line with qty 3",
+      "edge_cases": [
+        "Same SKU appears across different batch types — handled within each batch independently",
+        "Same SKU with different prices per line — consolidated but notes the price variance"
+      ]
+    },
+    {
+      "id": "AC-009",
+      "title": "DHL Shipping Labels Generated as Batched PDF",
+      "related_requirement": "FR-009",
+      "given_when_then": {
+        "given": "orders are ready for shipping and DHL is the selected carrier",
+        "when": "the DHL label generation API is called",
+        "then": "the system shall generate DHL shipping labels for each eligible order, produce them as individual PDFs, and compile a batched multi-page PDF for bulk printing"
+      },
+      "verification": "Verify DHL label PDFs are valid (can be opened), check batch PDF contains all labels in order",
+      "edge_cases": [
+        "DHL API is unavailable — system retries 3 times with backoff, then logs error and notifies staff",
+        "Order shipping address is outside DHL service area — system attempts Easy Ship or flags for manual handling",
+        "DHL label generation partially fails (e.g., 8/10 succeed) — success and failure both logged"
+      ]
+    },
+    {
+      "id": "AC-010",
+      "title": "Easy Ship Labels Generated as Batched PDF",
+      "related_requirement": "FR-010",
+      "given_when_then": {
+        "given": "orders are ready for shipping and Easy Ship is the selected carrier",
+        "when": "the Easy Ship label generation API is called",
+        "then": "the system shall generate Easy Ship shipping labels for each eligible order, produce them as individual PDFs, and compile a batched multi-page PDF for bulk printing"
+      },
+      "verification": "Verify Easy Ship label PDFs are valid, check batch PDF contents",
+      "edge_cases": [
+        "Easy Ship API returns quota exceeded error — queue remaining and retry after delay",
+        "Order dimensions/weight exceed Easy Ship limits — flag for manual handling"
+      ]
+    },
+    {
+      "id": "AC-011",
+      "title": "PDF Batches Organized Logically",
+      "related_requirement": "FR-011",
+      "given_when_then": {
+        "given": "the system generates multiple PDF documents",
+        "when": "compiling PDF batches",
+        "then": "batches shall be organized by type (pick lists, pack slips, DHL labels, Easy Ship labels) and further subdivided by brand group or carrier as appropriate. Each batch PDF shall have a cover page with summary metadata."
+      },
+      "verification": "Review generated batch folders and verify logical organization",
+      "edge_cases": [
+        "Only one document in a batch — still wrapped in batch PDF with cover sheet",
+        "Multiple carriers used on same day — separate batch PDFs per carrier"
+      ]
+    },
+    {
+      "id": "AC-012",
+      "title": "Staff Dashboard Shows Current Status",
+      "related_requirement": "FR-012",
+      "given_when_then": {
+        "given": "a VA or operations staff member navigates to the dashboard URL",
+        "when": "the dashboard page loads",
+        "then": "the dashboard shall display: pending orders count, flagged items requiring review, processing status (idle/running/completed/failed), generated documents summary, daily processing summary with timestamps, and quick actions for authorized users"
+      },
+      "verification": "Login as read-only user, verify all sections load; login as admin, verify quick actions visible",
+      "edge_cases": [
+        "No processing has run today — dashboard shows 'No data for today' with yesterday's summary",
+        "Dashboard loads while pipeline is running — shows real-time progress indicators",
+        "User has JavaScript disabled — basic HTML fallback shows key metrics"
+      ]
+    },
+    {
+      "id": "AC-013",
+      "title": "Logging Captures All Operations",
+      "related_requirement": "FR-013",
+      "given_when_then": {
+        "given": "the pipeline has executed",
+        "when": "reviewing system logs",
+        "then": "logs shall contain: timestamp, operation type, order IDs affected, result (success/failure), duration, and error details for failures. Logs shall be searchable by date range, operation type, and order ID."
+      },
+      "verification": "Execute pipeline, query logs for each major operation and verify completeness",
+      "edge_cases": [
+        "Log retention exceeds 90 days — oldest logs archived or rotated",
+        "Disk space low — system warns but continues processing",
+        "Multiple pipelines run same day — logs distinguishable by run ID"
+      ]
+    },
+    {
+      "id": "AC-014",
+      "title": "Error Handling and Notifications Work",
+      "related_requirement": "FR-014",
+      "given_when_then": {
+        "given": "a pipeline operation encounters a failure",
+        "when": "the error handling mechanism triggers",
+        "then": "the system shall: (a) log the error with full details, (b) retry up to 3 times with exponential backoff, (c) if all retries fail, send a notification to configured staff (email or other channel), and (d) continue processing remaining items where possible"
+      },
+      "verification": "Simulate an API failure (e.g., invalid credentials), verify retry behavior and notification delivery",
+      "edge_cases": [
+        "Critical failure at start of pipeline — pipeline aborts with notification",
+        "Transient failure mid-pipeline — retry succeeds, pipeline continues",
+        "Notification delivery fails — logged as separate error event"
+      ]
+    },
+    {
+      "id": "AC-015",
+      "title": "Daily Scheduled Execution with Manual Trigger",
+      "related_requirement": "FR-015",
+      "given_when_then": {
+        "given": "the system is configured with a daily schedule (e.g., 06:00 CET)",
+        "when": "the scheduled time is reached",
+        "then": "the pipeline shall start automatically without manual intervention. Additionally, an authorized user shall be able to trigger the pipeline manually via the dashboard at any time."
+      },
+      "verification": "Set schedule to 2 minutes from now, verify auto-start; trigger manually via dashboard, verify execution",
+      "edge_cases": [
+        "Manual trigger while pipeline is already running — second trigger rejected with 'Pipeline already running' message",
+        "Scheduled time missed (system was down) — catch-up logic triggers on restart",
+        "Schedule configuration invalid — system uses default schedule and logs warning"
+      ]
+    }
+  ],
+  "non_functional_acceptance_criteria": [
+    {
+      "id": "NF-AC-001",
+      "title": "Pipeline Completes Within 15 Minutes for 500 Orders",
+      "related_requirement": "NFR-001",
+      "description": "With 500 test orders in the Amazon.de account, the full pipeline from sync to label generation shall complete within 15 minutes.",
+      "verification": "Time the pipeline execution end-to-end with 500 mock orders. Repeat 3 times and take average.",
+      "pass_fail_criteria": "Average completion time ≤ 15 minutes"
+    },
+    {
+      "id": "NF-AC-002",
+      "title": "Zero Data Loss Across Runs",
+      "related_requirement": "NFR-002",
+      "description": "Every unshipped order at the start of a pipeline run shall either be processed to completion or explicitly flagged for review. No order shall silently disappear.",
+      "verification": "Compare order count from Amazon API before run vs. processed+flagged count after run. Must match exactly.",
+      "pass_fail_criteria": "100% match between source orders and processed+flagged orders"
+    },
+    {
+      "id": "NF-AC-003",
+      "title": "Credentials Encrypted at Rest",
+      "related_requirement": "NFR-004",
+      "description": "All API credentials stored in the system's configuration database shall be encrypted using AES-256 or equivalent. Plain-text credentials must never appear in logs, error messages, or configuration exports.",
+      "verification": "Inspect credential storage mechanism; grep logs for credential patterns after a full pipeline run",
+      "pass_fail_criteria": "No plain-text credentials found in any log or config export"
+    },
+    {
+      "id": "NF-AC-004",
+      "title": "German Address Format Correct",
+      "related_requirement": "NFR-006",
+      "description": "All addresses on generated documents shall follow German format: Empfänger, Straße Hausnummer, PLZ Ort, Deutschland. Special characters (ä, ö, ü, ß, ß) shall display correctly.",
+      "verification": "Generate documents for 10 German addresses covering edge cases (Packstation, c/o, multiple recipients)",
+      "pass_fail_criteria": "All 10 addresses correctly formatted"
+    },
+    {
+      "id": "NF-AC-005",
+      "title": "GDPR Data Retention Enforced",
+      "related_requirement": "NFR-007",
+      "description": "Customer personal data (names, addresses) shall be automatically purged or anonymized 90 days after order fulfillment completion.",
+      "verification": "Insert test data with known date, advance system clock past 90 days, verify data is purged",
+      "pass_fail_criteria": "Test customer data not retrievable after 90 + 1 day"
+    },
+    {
+      "id": "NF-AC-006",
+      "title": "Role-Based Access Control Enforced",
+      "related_requirement": "NFR-005",
+      "description": "Read-only users shall only view dashboard data. Admin users shall additionally access pipeline controls and configuration.",
+      "verification": "Login as read-only user — verify pipeline trigger button is hidden/disabled. Login as admin — verify button is active.",
+      "pass_fail_criteria": "Read-only user cannot trigger pipeline via UI or API"
+    }
+  ],
+  "definition_of_done": [
+    "All 15 functional acceptance criteria pass verification",
+    "All 6 non-functional acceptance criteria pass verification",
+    "Pipeline processes 500 test orders within 15 minutes",
+    "Zero data loss confirmed over 5 consecutive test runs",
+    "PDF documents are valid and printable on A4",
+    "DHL and Easy Ship label generation confirmed with sandbox/test APIs",
+    "Logs capture all operations with searchable fields",
+    "Error notifications deliver correctly to configured channels",
+    "Dashboard displays correctly for both read-only and admin roles",
+    "German address formatting confirmed correct for all edge cases"
+  ],
+  "test_guidance": {
+    "unit_tests": [
+      "Batch splitting algorithm with all four batch type scenarios",
+      "Brand segregation logic with edge cases",
+      "Duplicate SKU consolidation",
+      "Review rule evaluation engine",
+      "PDF generation metadata correctness",
+      "Date/number formatting for German locale"
+    ],
+    "integration_tests": [
+      "Amazon SP-API sync with pagination and rate limiting",
+      "DHL API label generation with success and failure scenarios",
+      "Easy Ship API label generation with success and failure scenarios",
+      "Error notification delivery (email/Slack)",
+      "Dashboard API endpoint security (RBAC enforcement)"
+    ],
+    "manual_tests": [
+      "Full end-to-end pipeline with real Amazon.de seller account (sandbox)",
+      "PDF visual inspection for all document types",
+      "Dashboard UX flow for read-only and admin users",
+      "Print test for A4 compatibility of all PDFs",
+      "German address special character rendering in PDFs"
+    ]
+  },
+  "task_issue_candidates": [
+    {
+      "id": "TSK-001",
+      "title": "[Task] Amazon.de SP-API Integration Module",
+      "description": "Implement the authentication and order synchronization module for Amazon.de Seller Central SP-API including OAuth flow, paginated order retrieval, order item fetching, and rate limit handling.",
+      "suggested_order": 1
+    },
+    {
+      "id": "TSK-002",
+      "title": "[Task] Order Processing Engine - Batching & Segregation",
+      "description": "Implement the core order processing engine that classifies orders into batch types, segregates by brand/SKU group, applies review rules, and consolidates duplicate SKUs.",
+      "suggested_order": 2
+    },
+    {
+      "id": "TSK-003",
+      "title": "[Task] PDF Document Generation (Pick Lists & Pack Slips)",
+      "description": "Implement PDF generation for pick lists (organized by batch/brand) and pack slips (per order with German addresses, barcodes). Include batch PDF compilation with cover sheets.",
+      "suggested_order": 3
+    },
+    {
+      "id": "TSK-004",
+      "title": "[Task] DHL Shipping Integration Module",
+      "description": "Implement DHL shipping API integration for label generation including authentication, label request/retrieval, PDF generation, batch compilation, and error handling.",
+      "suggested_order": 4
+    },
+    {
+      "id": "TSK-005",
+      "title": "[Task] Easy Ship Shipping Integration Module",
+      "description": "Implement Easy Ship shipping API integration for label generation including authentication, label request/retrieval, PDF generation, batch compilation, and error handling.",
+      "suggested_order": 5
+    },
+    {
+      "id": "TSK-006",
+      "title": "[Task] Staff Dashboard Web UI",
+      "description": "Build a simple web-based dashboard for VAs and operations staff showing pipeline status, order metrics, flagged items, document summaries, and administrative controls with RBAC.",
+      "suggested_order": 6
+    },
+    {
+      "id": "TSK-007",
+      "title": "[Task] Pipeline Scheduler & Orchestrator",
+      "description": "Implement the pipeline orchestration layer including scheduled execution, manual triggers, state management (idle/running/completed/failed), and catch-up logic.",
+      "suggested_order": 7
+    },
+    {
+      "id": "TSK-008",
+      "title": "[Task] Logging, Monitoring & Error Handling Infrastructure",
+      "description": "Implement comprehensive logging infrastructure, error handling with retry logic, health check endpoints, notification delivery (email/Slack), and log search capabilities.",
+      "suggested_order": 8
+    },
+    {
+      "id": "TSK-009",
+      "title": "[Task] Configuration & Secrets Management",
+      "description": "Implement configuration management (schedule, thresholds, carrier defaults) and secure secrets storage for API credentials with encryption at rest.",
+      "suggested_order": 9
+    }
+  ]
+}

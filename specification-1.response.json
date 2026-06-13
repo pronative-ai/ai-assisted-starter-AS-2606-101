@@ -1,0 +1,230 @@
+﻿{
+  "stage": 1,
+  "stage_name": "Requirements Analysis",
+  "status": "success",
+  "business_intent": {
+    "business_idea": "Automate the daily morning workflow for unshipped Fulfilled by Merchant (FBM) orders on Amazon.de. The system should sync unshipped FBM orders from Amazon.de, retrieve order items, split batches intelligently (single SKU qty 1, single SKU qty 2, single SKU qty 3+, mixed/multi-line orders), segregate by brand/SKU group, flag items needing review, generate pick lists/pack slips/PDF batches, prevent duplicates for multiple SKUs with the same product, generate DHL and Easy Ship labels as printable PDF batches, provide a simple staff dashboard, and include comprehensive logs and error handling.",
+    "target_users": "Virtual Assistants (VAs) and operations staff who manage Amazon.de FBM order fulfillment daily.",
+    "business_goal": "Eliminate manual VA work every morning by fully automating the unshipped FBM order processing pipeline, reducing processing time from hours to minutes.",
+    "known_constraints": "Must integrate with Amazon.de Seller Central (FBM), DHL shipping API, and Easy Ship shipping API. Must handle German marketplace specifics (addresses, tax, etc.). Must run on the existing infrastructure.",
+    "existing_context": "This is a new automation system to replace manual VA work. No existing automation for this workflow is in place. The project repo is the current workspace.",
+    "scope_level": "MVP"
+  },
+  "requirement_summary": "The system automates the end-to-end daily processing of unshipped Fulfilled by Merchant (FBM) orders on Amazon.de. It replaces manual VA work with an integrated pipeline that syncs orders, batches them intelligently, generates fulfillment documents (pick lists, pack slips, shipping labels), and provides a dashboard for staff oversight. The MVP focuses on the core order processing pipeline with integration to Amazon Seller Central, DHL, and Easy Ship APIs.",
+  "epic_candidate": {
+    "title": "[Epic] Automated FBM Order Fulfillment Pipeline for Amazon.de",
+    "description": "Build an end-to-end automation system that replaces manual VA morning workflows for unshipped FBM orders on Amazon.de. The system syncs orders from Amazon Seller Central, intelligently batches them by SKU quantity and brand, generates pick lists and pack slips as PDFs, produces DHL and Easy Ship shipping labels, prevents duplicate processing, and provides a staff dashboard for monitoring and intervention."
+  },
+  "functional_requirements": [
+    {
+      "id": "FR-001",
+      "title": "Amazon.de Order Sync",
+      "description": "The system shall authenticate with Amazon.de Seller Central SP-API and retrieve all unshipped FBM orders daily. It shall support paginated retrieval and respect API rate limits.",
+      "priority": "High",
+      "category": "Integration"
+    },
+    {
+      "id": "FR-002",
+      "title": "Order Item Retrieval",
+      "description": "For each retrieved order, the system shall fetch the individual order items including SKU, quantity, price, shipping address, and tax information specific to the German marketplace.",
+      "priority": "High",
+      "category": "Integration"
+    },
+    {
+      "id": "FR-003",
+      "title": "Intelligent Batch Splitting",
+      "description": "The system shall split unshipped orders into the following batch types: (a) Single SKU quantity 1, (b) Single SKU quantity 2, (c) Single SKU quantity 3+, (d) Mixed/multi-line orders (multiple SKUs in one order). Each batch type shall be processed separately.",
+      "priority": "High",
+      "category": "Processing"
+    },
+    {
+      "id": "FR-004",
+      "title": "Brand/SKU Group Segregation",
+      "description": "The system shall segregate order items by brand and/or SKU group to enable efficient picking and packing workflows. Items from the same brand/SKU group should be batched together where practical.",
+      "priority": "Medium",
+      "category": "Processing"
+    },
+    {
+      "id": "FR-005",
+      "title": "Review Flagging",
+      "description": "The system shall flag order items that require manual review (e.g., high-value items, unusual shipping addresses, items with special handling notes, or items matching configurable review rules). Flagged items shall be excluded from automatic processing until reviewed.",
+      "priority": "Medium",
+      "category": "Processing"
+    },
+    {
+      "id": "FR-006",
+      "title": "Pick List Generation",
+      "description": "The system shall generate PDF pick lists organized by batch/brand group, showing item locations, quantities to pick, and order references. Pick lists shall be printable and optimized for warehouse workflow.",
+      "priority": "High",
+      "category": "Document Generation"
+    },
+    {
+      "id": "FR-007",
+      "title": "Pack Slip Generation",
+      "description": "The system shall generate PDF pack slips for each order containing item details, quantities, customer shipping address (German format), and order metadata. Pack slips shall be printable and accompany shipments.",
+      "priority": "High",
+      "category": "Document Generation"
+    },
+    {
+      "id": "FR-008",
+      "title": "Duplicate SKU Prevention",
+      "description": "When an order contains multiple line items for the same SKU (same product), the system shall consolidate them into a single line on the pick list and pack slip to prevent duplicate processing. The system shall also detect and prevent the creation of duplicate shipping labels for the same order item.",
+      "priority": "Medium",
+      "category": "Processing"
+    },
+    {
+      "id": "FR-009",
+      "title": "DHL Shipping Label Generation",
+      "description": "The system shall integrate with the DHL shipping API to generate shipping labels for eligible orders. Labels shall be produced as printable PDFs batched for efficiency. The system shall support DHL-specific requirements for German domestic and international shipments.",
+      "priority": "High",
+      "category": "Shipping"
+    },
+    {
+      "id": "FR-010",
+      "title": "Easy Ship Shipping Label Generation",
+      "description": "The system shall integrate with the Easy Ship shipping API to generate shipping labels for eligible orders. Labels shall be produced as printable PDFs batched for efficiency. The system shall handle Easy Ship-specific requirements.",
+      "priority": "High",
+      "category": "Shipping"
+    },
+    {
+      "id": "FR-011",
+      "title": "PDF Batch Processing",
+      "description": "The system shall generate batched PDFs for pick lists, pack slips, and shipping labels. Batches shall be organized logically (by batch type, brand group, or shipping carrier). Each batch PDF shall be printable as a single document.",
+      "priority": "Medium",
+      "category": "Document Generation"
+    },
+    {
+      "id": "FR-012",
+      "title": "Staff Dashboard",
+      "description": "The system shall provide a simple web-based dashboard for VAs and operations staff showing: pending orders, flagged items requiring review, batch processing status, generated documents, shipping label status, and daily processing summary. The dashboard shall be read-only for regular staff with administrative functions for authorized users.",
+      "priority": "Medium",
+      "category": "User Interface"
+    },
+    {
+      "id": "FR-013",
+      "title": "Comprehensive Logging",
+      "description": "The system shall maintain detailed logs of all operations including order syncs, batch assignments, document generation, shipping label requests, API calls, and any errors encountered. Logs shall be searchable and retain at least 90 days of history.",
+      "priority": "Medium",
+      "category": "Operations"
+    },
+    {
+      "id": "FR-014",
+      "title": "Error Handling and Notifications",
+      "description": "The system shall handle API failures, network errors, and data inconsistencies gracefully. Critical failures shall trigger notifications (e.g., email) to operations staff. Failed operations shall be retried with configurable backoff and max retry limits.",
+      "priority": "High",
+      "category": "Operations"
+    },
+    {
+      "id": "FR-015",
+      "title": "Daily Scheduled Execution",
+      "description": "The system shall execute the full order processing pipeline on a configurable daily schedule. The schedule shall be adjustable by operations staff. Manual triggering of the pipeline shall also be supported.",
+      "priority": "High",
+      "category": "Operations"
+    }
+  ],
+  "non_functional_requirements": [
+    {
+      "id": "NFR-001",
+      "title": "Performance - Processing Time",
+      "description": "The full daily pipeline (sync to label generation) for up to 500 orders shall complete within 15 minutes.",
+      "priority": "High",
+      "category": "Performance"
+    },
+    {
+      "id": "NFR-002",
+      "title": "Reliability - Order Accuracy",
+      "description": "The system shall process 100% of unshipped orders each run with zero data loss. No order shall be skipped or duplicated unless explicitly flagged for review.",
+      "priority": "High",
+      "category": "Reliability"
+    },
+    {
+      "id": "NFR-003",
+      "title": "Availability",
+      "description": "The system shall be available for scheduled execution during the configured morning window. Maximum allowable downtime is 30 minutes per day.",
+      "priority": "Medium",
+      "category": "Availability"
+    },
+    {
+      "id": "NFR-004",
+      "title": "Security - API Authentication",
+      "description": "All API credentials (Amazon SP-API, DHL, Easy Ship) shall be stored securely using encryption at rest. No plain-text credentials shall appear in logs, configuration files, or code repositories.",
+      "priority": "High",
+      "category": "Security"
+    },
+    {
+      "id": "NFR-005",
+      "title": "Security - Access Control",
+      "description": "The staff dashboard shall implement role-based access control with read-only and admin roles. Administrative functions (re-running pipeline, modifying flagged items) shall require elevated privileges.",
+      "priority": "Medium",
+      "category": "Security"
+    },
+    {
+      "id": "NFR-006",
+      "title": "Data - German Marketplace Compliance",
+      "description": "The system shall correctly handle German-specific data formats including address formats (Str., Hausnummer, PLZ, Ort), VAT/tax handling, and German date/number formatting.",
+      "priority": "High",
+      "category": "Compliance"
+    },
+    {
+      "id": "NFR-007",
+      "title": "Data - GDPR Compliance",
+      "description": "The system shall comply with GDPR requirements for handling customer personal data. Shipping addresses and customer information shall be retained only as long as necessary for fulfillment and legal obligations.",
+      "priority": "High",
+      "category": "Compliance"
+    },
+    {
+      "id": "NFR-008",
+      "title": "Maintainability",
+      "description": "The system shall be designed with modular architecture supporting independent updates to integrations (Amazon, DHL, Easy Ship). Configuration changes shall not require code deployments.",
+      "priority": "Medium",
+      "category": "Maintainability"
+    },
+    {
+      "id": "NFR-009",
+      "title": "Scalability",
+      "description": "The system shall handle growth from 500 to 5000 daily orders without architectural changes. Batch processing and API calls shall scale linearly or better.",
+      "priority": "Low",
+      "category": "Scalability"
+    },
+    {
+      "id": "NFR-010",
+      "title": "Observability",
+      "description": "The system shall expose health check endpoints and metrics (orders processed, labels generated, error rates) for monitoring. Logs shall be structured for integration with external log management tools.",
+      "priority": "Medium",
+      "category": "Operations"
+    }
+  ],
+  "scope_constraints": [
+    "Amazon.de Seller Central SP-API rate limits and throttling",
+    "DHL API availability and usage quotas",
+    "Easy Ship API coverage and regional limitations",
+    "Existing infrastructure compute and storage capacity",
+    "Development timeline for MVP"
+  ],
+  "assumptions": [
+    "Amazon.de Seller Central SP-API access is available with appropriate credentials",
+    "DHL business account with API access is available",
+    "Easy Ship account with API access is available",
+    "Staff have basic technical literacy to use a web dashboard",
+    "The system runs on existing infrastructure (server/cloud environment)",
+    "Daily morning processing window is acceptable for fulfillment timelines"
+  ],
+  "out_of_scope": [
+    "Integration with Amazon FBA (Fulfilled by Amazon) orders",
+    "Returns management or reverse logistics",
+    "Inventory management or stock level tracking",
+    "Multi-channel fulfillment (non-Amazon orders)",
+    "Mobile app development (web dashboard only)",
+    "International marketplace support beyond Amazon.de",
+    "Advanced analytics or reporting beyond basic dashboard metrics",
+    "Warehouse management system (WMS) integration"
+  ],
+  "open_questions": [
+    "What is the exact daily processing window (time of day)?",
+    "What are the thresholds for flagging items for review?",
+    "Should DHL or Easy Ship be the default carrier, or is it order-dependent?",
+    "What is the maximum number of concurrent API calls allowed by the integrations?",
+    "Should the system support partial fulfillment (splitting orders across multiple shipments)?",
+    "What notification channels are preferred for alerts (email, Slack, etc.)?"
+  ]
+}

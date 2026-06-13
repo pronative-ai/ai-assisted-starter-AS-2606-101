@@ -1,0 +1,1657 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "PronativeAdlcUnified.Api | v1",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://ca-adlc-unified-agent.ashyocean-2579666a.westus2.azurecontainerapps.io/"
+    }
+  ],
+  "paths": {
+    "/": {
+      "get": {
+        "tags": [
+          "PronativeAdlcUnified.Api"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/requirements": {
+      "get": {
+        "tags": [
+          "PronativeAdlcUnified.Api"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/requirements/analyze": {
+      "post": {
+        "tags": [
+          "PronativeAdlcUnified.Api"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BusinessIntentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/acceptance-criteria": {
+      "get": {
+        "tags": [
+          "PronativeAdlcUnified.Api"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/acceptance-criteria/generate": {
+      "post": {
+        "tags": [
+          "PronativeAdlcUnified.Api"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentPayload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/solution-architecture": {
+      "get": {
+        "tags": [
+          "PronativeAdlcUnified.Api"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/solution-architecture/design": {
+      "post": {
+        "tags": [
+          "PronativeAdlcUnified.Api"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentPayload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/pipeline": {
+      "get": {
+        "tags": [
+          "PronativeAdlcUnified.Api"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/pipeline/review": {
+      "post": {
+        "tags": [
+          "PronativeAdlcUnified.Api"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PipelineReviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/pipeline/review/github": {
+      "post": {
+        "tags": [
+          "PronativeAdlcUnified.Api"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GitHubReviewTrigger"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/cost": {
+      "get": {
+        "tags": [
+          "PronativeAdlcUnified.Api"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/cost/review": {
+      "post": {
+        "tags": [
+          "PronativeAdlcUnified.Api"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CostOptimizationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/runtime": {
+      "get": {
+        "tags": [
+          "PronativeAdlcUnified.Api"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/runtime/incident-review": {
+      "post": {
+        "tags": [
+          "PronativeAdlcUnified.Api"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RuntimeIncidentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/reports": {
+      "post": {
+        "tags": [
+          "PronativeAdlcUnified.Api"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentReport"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "PronativeAdlcUnified.Api"
+        ],
+        "parameters": [
+          {
+            "name": "stage",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "requiresHumanReview",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/reports/{reportId}": {
+      "get": {
+        "tags": [
+          "PronativeAdlcUnified.Api"
+        ],
+        "parameters": [
+          {
+            "name": "reportId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/reviews/pending": {
+      "get": {
+        "tags": [
+          "PronativeAdlcUnified.Api"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/reports/{reportId}/decision": {
+      "post": {
+        "tags": [
+          "PronativeAdlcUnified.Api"
+        ],
+        "parameters": [
+          {
+            "name": "reportId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecisionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AcceptanceCriterion": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "priority": {
+            "type": "string"
+          },
+          "related_requirements": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "AffectedResource": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "resource_id": {
+            "type": "string"
+          },
+          "region": {
+            "type": "string"
+          }
+        }
+      },
+      "AgentEvidence": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "reference": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        }
+      },
+      "AgentPayload": {
+        "type": "object",
+        "properties": {
+          "requirement_summary": {
+            "type": "string"
+          },
+          "functional_requirements": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FunctionalRequirement"
+            }
+          },
+          "non_functional_requirements": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NonFunctionalRequirement"
+            }
+          },
+          "assumptions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "open_questions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "out_of_scope": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "scope_constraints": {
+            "type": "string"
+          },
+          "issue_candidates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IssueCandidate"
+            }
+          },
+          "selected_issue_candidate": {
+            "$ref": "#/components/schemas/IssueCandidate"
+          },
+          "acceptance_criteria": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AcceptanceCriterion"
+            }
+          },
+          "given_when_then": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GivenWhenThenScenario"
+            }
+          },
+          "verification_checks": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "edge_cases": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "test_guidance": {
+            "$ref": "#/components/schemas/TestGuidance"
+          },
+          "definition_of_done": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "architecture_summary": {
+            "type": "string"
+          },
+          "architecture_decisions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ArchitectureDecision"
+            }
+          },
+          "component_model": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ComponentModelItem"
+            }
+          },
+          "repo_structure_guidance": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RepoStructureGuidance"
+            }
+          },
+          "api_boundary_guidance": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApiBoundaryGuidance"
+            }
+          },
+          "data_model_guidance": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DataModelGuidance"
+            }
+          },
+          "azure_deployment_guidance": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AzureDeploymentGuidance"
+            }
+          },
+          "security_and_governance_notes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "implementation_slices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImplementationSlice"
+            }
+          },
+          "risks_and_assumptions": {
+            "$ref": "#/components/schemas/RisksAndAssumptions"
+          },
+          "handoff": {
+            "$ref": "#/components/schemas/HandoffNotes"
+          }
+        }
+      },
+      "AgentRecommendation": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "risk": {
+            "type": "string"
+          },
+          "requires_approval": {
+            "type": "boolean"
+          },
+          "rationale": {
+            "type": "string"
+          }
+        }
+      },
+      "AgentReport": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "report_id": {
+            "type": "string"
+          },
+          "agent_name": {
+            "type": "string"
+          },
+          "stage": {
+            "type": "string"
+          },
+          "source_event": {
+            "type": "string"
+          },
+          "student_id": {
+            "type": "string"
+          },
+          "student_repo": {
+            "type": "string"
+          },
+          "azure_resource_group": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AgentEvidence"
+            }
+          },
+          "recommendations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AgentRecommendation"
+            }
+          },
+          "requires_human_review": {
+            "type": "boolean"
+          },
+          "suggested_next_action": {
+            "type": "string"
+          },
+          "suggested_routing": {
+            "$ref": "#/components/schemas/JsonElement"
+          },
+          "detail": {
+            "$ref": "#/components/schemas/JsonElement"
+          },
+          "decision": {
+            "$ref": "#/components/schemas/ReviewDecision"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AlertSummary": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string"
+          },
+          "trigger_condition": {
+            "type": "string"
+          },
+          "affected_component": {
+            "type": "string"
+          }
+        }
+      },
+      "ApiBoundaryGuidance": {
+        "type": "object",
+        "properties": {
+          "area": {
+            "type": "string"
+          },
+          "responsibility": {
+            "type": "string"
+          },
+          "example_operations": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "ArchitectureDecision": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "decision": {
+            "type": "string"
+          },
+          "rationale": {
+            "type": "string"
+          },
+          "trade_offs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "alternatives_considered": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "related_requirements": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "AzureDeploymentGuidance": {
+        "type": "object",
+        "properties": {
+          "service": {
+            "type": "string"
+          },
+          "purpose": {
+            "type": "string"
+          },
+          "training_sku_guidance": {
+            "type": "string"
+          }
+        }
+      },
+      "BusinessIntentRequest": {
+        "type": "object",
+        "properties": {
+          "business_idea": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "target_users": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "business_goal": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "known_constraints": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "existing_context": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "scope_level": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "CleanupPolicy": {
+        "type": "object",
+        "properties": {
+          "delete_after": {
+            "type": "string"
+          },
+          "protected_resource_rules": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "cleanup_eligible_rules": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "approval_path": {
+            "type": "string"
+          }
+        }
+      },
+      "ComponentModelItem": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "responsibility": {
+            "type": "string"
+          },
+          "technology_guidance": {
+            "type": "string"
+          },
+          "related_requirements": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "CostOptimizationRequest": {
+        "type": "object",
+        "properties": {
+          "review_id": {
+            "type": "string"
+          },
+          "source_event": {
+            "type": "string"
+          },
+          "review_scope": {
+            "type": "string"
+          },
+          "student_id": {
+            "type": "string"
+          },
+          "student_repo": {
+            "type": "string"
+          },
+          "batch_id": {
+            "type": "string"
+          },
+          "subscription_id": {
+            "type": "string"
+          },
+          "azure_resource_group": {
+            "type": "string"
+          },
+          "review_period": {
+            "type": "string"
+          },
+          "resource_inventory": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResourceInventoryItem"
+            }
+          },
+          "cost_summary": {
+            "$ref": "#/components/schemas/CostSummary"
+          },
+          "utilization_summary": {
+            "$ref": "#/components/schemas/UtilizationSummary"
+          },
+          "sku_guideline": {
+            "$ref": "#/components/schemas/SkuGuideline"
+          },
+          "cleanup_policy": {
+            "$ref": "#/components/schemas/CleanupPolicy"
+          },
+          "allowed_actions": {
+            "type": "string"
+          }
+        }
+      },
+      "CostSummary": {
+        "type": "object",
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "actual_cost": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "forecast_cost": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "top_services": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ServiceCostItem"
+            }
+          },
+          "daily_trend": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "budget_signals": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "DataModelGuidance": {
+        "type": "object",
+        "properties": {
+          "entity": {
+            "type": "string"
+          },
+          "purpose": {
+            "type": "string"
+          },
+          "key_fields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "relationships": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "DecisionRequest": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "reviewer": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "approved_next_action": {
+            "type": "string"
+          }
+        }
+      },
+      "DeploymentContext": {
+        "type": "object",
+        "properties": {
+          "environment": {
+            "type": "string"
+          },
+          "azure_resource_group": {
+            "type": "string"
+          },
+          "static_web_app_name": {
+            "type": "string"
+          },
+          "container_app_name": {
+            "type": "string"
+          },
+          "approval_state": {
+            "type": "string"
+          }
+        }
+      },
+      "FailedJobOrStep": {
+        "type": "object",
+        "properties": {
+          "job": {
+            "type": "string"
+          },
+          "step": {
+            "type": "string"
+          },
+          "log_excerpt": {
+            "type": "string"
+          }
+        }
+      },
+      "FeatureIntentContext": {
+        "type": "object",
+        "properties": {
+          "issue_number": {
+            "type": "string"
+          },
+          "issue_title": {
+            "type": "string"
+          },
+          "acceptance_criteria": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "architecture_guidance": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "implementation_slices": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "out_of_scope": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "FunctionalRequirement": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "priority": {
+            "type": "string"
+          }
+        }
+      },
+      "GitHubReviewTrigger": {
+        "required": [
+          "run_id",
+          "repository",
+          "commit_sha"
+        ],
+        "type": "object",
+        "properties": {
+          "run_id": {
+            "type": "string"
+          },
+          "repository": {
+            "type": "string"
+          },
+          "commit_sha": {
+            "type": "string"
+          }
+        }
+      },
+      "GivenWhenThenScenario": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "given": {
+            "type": "string"
+          },
+          "when": {
+            "type": "string"
+          },
+          "then": {
+            "type": "string"
+          },
+          "related_acceptance_criteria": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "HandoffNotes": {
+        "type": "object",
+        "properties": {
+          "implementation_brief_markdown": {
+            "type": "string"
+          },
+          "notes_for_copilot": {
+            "type": "string"
+          },
+          "notes_for_cicd_agent": {
+            "type": "string"
+          },
+          "notes_for_iac_agent": {
+            "type": "string"
+          },
+          "notes_for_test_agent": {
+            "type": "string"
+          },
+          "notes_for_reviewer": {
+            "type": "string"
+          }
+        }
+      },
+      "ImplementationSlice": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "related_acceptance_criteria": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "suggested_order": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "IssueCandidate": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "priority": {
+            "type": "string"
+          },
+          "related_requirements": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "recommended_next_agent": {
+            "type": "string"
+          }
+        }
+      },
+      "JsonElement": { },
+      "NonFunctionalRequirement": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "priority": {
+            "type": "string"
+          }
+        }
+      },
+      "PipelineReviewRequest": {
+        "type": "object",
+        "properties": {
+          "pipeline_event_type": {
+            "type": "string"
+          },
+          "repo": {
+            "type": "string"
+          },
+          "provisioning_context": {
+            "$ref": "#/components/schemas/ProvisioningContext"
+          },
+          "feature_intent_context": {
+            "$ref": "#/components/schemas/FeatureIntentContext"
+          },
+          "pr_or_issue_context": {
+            "$ref": "#/components/schemas/PrOrIssueContext"
+          },
+          "workflow_run_context": {
+            "$ref": "#/components/schemas/WorkflowRunContext"
+          },
+          "deployment_context": {
+            "$ref": "#/components/schemas/DeploymentContext"
+          },
+          "failed_job_or_step": {
+            "$ref": "#/components/schemas/FailedJobOrStep"
+          },
+          "security_scan_context": {
+            "$ref": "#/components/schemas/SecurityScanContext"
+          },
+          "allowed_actions": {
+            "type": "string"
+          }
+        }
+      },
+      "PrOrIssueContext": {
+        "type": "object",
+        "properties": {
+          "pull_request_number": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "branch": {
+            "type": "string"
+          },
+          "commit_sha": {
+            "type": "string"
+          },
+          "changed_files": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "ProvisioningContext": {
+        "type": "object",
+        "properties": {
+          "student_id": {
+            "type": "string"
+          },
+          "batch_id": {
+            "type": "string"
+          },
+          "azure_resource_group": {
+            "type": "string"
+          },
+          "environment_name": {
+            "type": "string"
+          },
+          "expected_checks": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "azure_services": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "RecentChangeContext": {
+        "type": "object",
+        "properties": {
+          "workflow_run_id": {
+            "type": "string"
+          },
+          "commit_sha": {
+            "type": "string"
+          },
+          "pull_request_number": {
+            "type": "string"
+          },
+          "deployment_timestamp": {
+            "type": "string"
+          },
+          "changed_files": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "deployment_summary": {
+            "type": "string"
+          }
+        }
+      },
+      "RepoStructureGuidance": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "purpose": {
+            "type": "string"
+          }
+        }
+      },
+      "ResourceInventoryItem": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "region": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "tags": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      },
+      "ReviewDecision": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "reviewer": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "approved_next_action": {
+            "type": "string"
+          }
+        }
+      },
+      "RisksAndAssumptions": {
+        "type": "object",
+        "properties": {
+          "risks": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "assumptions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "open_questions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "RunbookContext": {
+        "type": "object",
+        "properties": {
+          "existing_runbook_url": {
+            "type": "string"
+          },
+          "approved_actions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "restricted_actions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "escalation_path": {
+            "type": "string"
+          }
+        }
+      },
+      "RuntimeIncidentRequest": {
+        "type": "object",
+        "properties": {
+          "incident_id": {
+            "type": "string"
+          },
+          "source_event": {
+            "type": "string"
+          },
+          "student_id": {
+            "type": "string"
+          },
+          "student_repo": {
+            "type": "string"
+          },
+          "azure_resource_group": {
+            "type": "string"
+          },
+          "alert_summary": {
+            "$ref": "#/components/schemas/AlertSummary"
+          },
+          "affected_resources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AffectedResource"
+            }
+          },
+          "telemetry_snapshot": {
+            "$ref": "#/components/schemas/TelemetrySnapshot"
+          },
+          "time_window": {
+            "type": "string"
+          },
+          "recent_change_context": {
+            "$ref": "#/components/schemas/RecentChangeContext"
+          },
+          "runbook_context": {
+            "$ref": "#/components/schemas/RunbookContext"
+          },
+          "service_expectations": {
+            "$ref": "#/components/schemas/ServiceExpectations"
+          },
+          "allowed_actions": {
+            "type": "string"
+          }
+        }
+      },
+      "SecurityScanContext": {
+        "type": "object",
+        "properties": {
+          "code_ql_status": {
+            "type": "string"
+          },
+          "dependency_review_status": {
+            "type": "string"
+          },
+          "secret_scanning_status": {
+            "type": "string"
+          }
+        }
+      },
+      "ServiceCostItem": {
+        "type": "object",
+        "properties": {
+          "service_name": {
+            "type": "string"
+          },
+          "cost": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "comment": {
+            "type": "string"
+          }
+        }
+      },
+      "ServiceExpectations": {
+        "type": "object",
+        "properties": {
+          "expected_behavior": {
+            "type": "string"
+          },
+          "health_checks": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "acceptance_criteria": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "SkuGuideline": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "approved_decisions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "region_decisions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "exceptions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "TelemetrySnapshot": {
+        "type": "object",
+        "properties": {
+          "failed_requests": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "exceptions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "dependency_failures": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "metrics": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "traces": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "kql_query_links": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "TestGuidance": {
+        "type": "object",
+        "properties": {
+          "unit_test_ideas": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "integration_test_ideas": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "manual_test_steps": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "UtilizationSummary": {
+        "type": "object",
+        "properties": {
+          "cpu_memory_signals": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "request_volume_signals": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "storage_signals": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "telemetry_signals": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "idle_or_low_use_signals": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "WorkflowRunContext": {
+        "type": "object",
+        "properties": {
+          "run_id": {
+            "type": "string"
+          },
+          "run_number": {
+            "type": "string"
+          },
+          "workflow": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "conclusion": {
+            "type": "string"
+          },
+          "commit_sha": {
+            "type": "string"
+          },
+          "ref": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "PronativeAdlcUnified.Api"
+    }
+  ]
+}

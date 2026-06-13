@@ -1,0 +1,27 @@
+Our main goal is automate and save time of VA/manual work every morning by automating unshipped FBM order
+
+1. Amazon.de unshipped FBM order sync
+ 
+2. Order item retrieval
+ 
+3. Batch split:
+* Single SKU, quantity 1
+* Single SKU, quantity 2
+* Single SKU, quantity 3+
+* Mixed / multi-line orders
+ 
+4. Brand / SKU group segregation
+ 
+5. Needs Review section
+ 
+6. Pick list / pack slip / PDF batch generation
+ 
+7. Duplicate prevention -
+ 
+Multiple SKU with same produce  
+ 
+8. DHL and Easy Ship label generation and printable label PDF batches
+ 
+9. Simple staff dashboard
+ 
+10. Logs and error handling

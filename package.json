@@ -1,0 +1,31 @@
+{
+  "name": "fbm-fulfillment-pipeline",
+  "version": "1.0.0",
+  "description": "Automated FBM Order Fulfillment Pipeline for Amazon.de",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "test": "jest --testPathPattern=src/",
+    "test:infra": "jest --testPathPattern=src/infrastructure"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "nodemailer": "^6.9.7",
+    "pg": "^8.11.3",
+    "pino": "^8.17.0",
+    "pino-pretty": "^10.3.1"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "nodemon": "^3.0.2",
+    "supertest": "^6.3.3"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": ["**/__tests__/**/*.test.js"]
+  }
+}

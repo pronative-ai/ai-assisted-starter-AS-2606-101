@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>FBM Pipeline — Daily Summary</title>
+</head>
+<body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
+  <h2 style="color: #388e3c; border-bottom: 2px solid #388e3c; padding-bottom: 8px;">
+    FBM Pipeline — Daily Summary
+  </h2>
+  <table style="width: 100%; border-collapse: collapse; margin-top: 16px;">
+    <tr style="background: #f5f5f5;">
+      <td style="padding: 10px 12px; font-weight: bold; width: 160px;">Run ID</td>
+      <td style="padding: 10px 12px; font-family: monospace;">{{pipelineRunId}}</td>
+    </tr>
+    <tr>
+      <td style="padding: 10px 12px; font-weight: bold;">Orders Retrieved</td>
+      <td style="padding: 10px 12px;">{{ordersRetrieved}}</td>
+    </tr>
+    <tr style="background: #f5f5f5;">
+      <td style="padding: 10px 12px; font-weight: bold;">Orders Processed</td>
+      <td style="padding: 10px 12px;">{{ordersProcessed}}</td>
+    </tr>
+    <tr>
+      <td style="padding: 10px 12px; font-weight: bold;">Orders Flagged</td>
+      <td style="padding: 10px 12px;">{{ordersFlagged}}</td>
+    </tr>
+    <tr style="background: #f5f5f5;">
+      <td style="padding: 10px 12px; font-weight: bold;">Labels Generated</td>
+      <td style="padding: 10px 12px;">{{labelsGenerated}}</td>
+    </tr>
+    <tr>
+      <td style="padding: 10px 12px; font-weight: bold;">Errors</td>
+      <td style="padding: 10px 12px;">{{errorCount}}</td>
+    </tr>
+    <tr style="background: #f5f5f5;">
+      <td style="padding: 10px 12px; font-weight: bold;">Completed At</td>
+      <td style="padding: 10px 12px;">{{completedAt}}</td>
+    </tr>
+  </table>
+  <p style="color: #999; font-size: 11px; margin-top: 32px; border-top: 1px solid #eee; padding-top: 12px;">
+    FBM Order Fulfillment Pipeline — automated summary. Do not reply to this message.
+  </p>
+</body>
+</html>

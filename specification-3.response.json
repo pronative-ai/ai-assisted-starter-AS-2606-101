@@ -1,0 +1,473 @@
+{
+  "stage": 3,
+  "stage_name": "Solution Architecture Design",
+  "status": "success",
+  "source_stage": "specification-2.response.json",
+  "architecture_summary": "The Automated FBM Order Fulfillment Pipeline is designed as a modular, event-driven backend system with a lightweight web dashboard. The architecture follows a pipeline pattern where each stage is an independent module coordinated by an orchestrator. The system uses a microservices-lite approach within a single deployable application, with clear module boundaries that can be extracted to separate services if needed. All state is persisted in a relational database, and PDF documents are stored in the filesystem with database references.",
+  "architecture_decisions": [
+    {
+      "id": "ADR-001",
+      "title": "Modular Monolith with Clean Module Boundaries",
+      "context": "The system needs to integrate with three external APIs (Amazon, DHL, Easy Ship) and process orders through a defined pipeline. An MVP must ship quickly but remain maintainable.",
+      "decision": "Adopt a modular monolith architecture where each major capability (Amazon sync, order processing, PDF generation, DHL integration, Easy Ship integration, dashboard) is a separate module with defined interfaces. Modules communicate through an in-process event bus (not HTTP).",
+      "consequences": "Simpler deployment than microservices; clear module isolation allows future extraction to separate services if needed; single codebase reduces operational complexity for MVP."
+    },
+    {
+      "id": "ADR-002",
+      "title": "PostgreSQL for Persistence",
+      "context": "The system requires transactional integrity for order processing, searchable logs, and support for JSON metadata.",
+      "decision": "Use PostgreSQL as the primary database. Stores orders, order items, batch assignments, processing state, logs, configuration, and document metadata. JSONB columns for flexible metadata where schema varies.",
+      "consequences": "ACID compliance ensures no order data loss; JSONB supports semi-structured data; PostgreSQL is well-supported on existing infrastructure."
+    },
+    {
+      "id": "ADR-003",
+      "title": "Background Job Queue for Pipeline Execution",
+      "context": "The pipeline involves sequential stages with retries and error handling. Synchronous execution would block the web server.",
+      "decision": "Use a lightweight job queue (e.g., Bull/BullMQ with Redis, or pg-boss with PostgreSQL) to execute pipeline stages as background jobs. Each pipeline stage is a separate job type. Failed jobs retry with backoff.",
+      "consequences": "Non-blocking pipeline execution; retry logic is built into the queue; pipeline state is recoverable if the process crashes."
+    },
+    {
+      "id": "ADR-004",
+      "title": "PDF Generation via Server-Side Library",
+      "context": "The system must generate pick lists, pack slips, and shipping labels as PDFs with German formatting.",
+      "decision": "Use a server-side PDF generation library (e.g., Puppeteer for HTML-to-PDF, or a Node.js library like PDFKit/jsPDF). Generate HTML templates with German locale formatting, then render to PDF. DHL/Easy Ship labels are generated via their APIs and wrapped into batch PDFs.",
+      "consequences": "Full control over PDF layout and formatting; HTML templates are maintainable; Puppeteer adds a dependency on Chromium."
+    },
+    {
+      "id": "ADR-005",
+      "title": "Web Dashboard as Server-Rendered or SPA",
+      "context": "The dashboard needs to display real-time pipeline status and be simple to maintain.",
+      "decision": "Build the dashboard as a lightweight server-rendered web app (e.g., EJS templates with Express) for the MVP. Use minimal client-side JavaScript for real-time updates (polling or SSE). This avoids the complexity of a separate SPA build pipeline.",
+      "consequences": "Simpler MVP delivery; fewer dependencies; easy to upgrade to a SPA later if needed."
+    },
+    {
+      "id": "ADR-006",
+      "title": "Secrets Management via Environment Variables with Encryption",
+      "context": "API credentials for Amazon, DHL, and Easy Ship must be stored securely. Plain-text credentials in config files are unacceptable.",
+      "decision": "Store secrets in an encrypted format at rest using Node.js crypto (AES-256-GCM). Secrets are loaded from environment variables at startup and decrypted on demand. The encryption key is provided via a secure environment variable or external vault.",
+      "consequences": "Secrets encrypted at rest; encryption key management becomes critical; suitable for MVP; can migrate to HashiCorp Vault or AWS Secrets Manager later."
+    },
+    {
+      "id": "ADR-007",
+      "title": "Amazon SP-API Integration via Official SDK",
+      "context": "Amazon Selling Partner API has complex authentication (IAM + OAuth) and restricted access.",
+      "decision": "Use the official Amazon SP-API SDK for Node.js (or equivalent) to handle authentication, signing, retry logic, and rate limiting. Implement a wrapper module for the specific order retrieval endpoints needed.",
+      "consequences": "Leverages Amazon's battle-tested SDK; reduces integration risk; SDK handles IAM request signing automatically."
+    },
+    {
+      "id": "ADR-008",
+      "title": "Carrier Selection Strategy",
+      "context": "Orders can be shipped via DHL or Easy Ship. The carrier may depend on order weight, destination, or product type.",
+      "decision": "Implement a configurable carrier routing engine: (a) explicit carrier per order based on rules (weight, destination, SKU category), (b) fallback carrier if primary fails, (c) manual override via dashboard. Default to DHL for German domestic, Easy Ship for international if available.",
+      "consequences": "Flexible carrier selection; rules engine is configurable without code changes; fallback logic improves reliability."
+    }
+  ],
+  "component_model": [
+    {
+      "id": "CMP-001",
+      "name": "Orchestrator",
+      "description": "Coordinates the pipeline execution across all stages. Manages pipeline state (idle/running/completed/failed), triggers stages in order, handles schedule-based and manual execution, and provides pipeline status to the dashboard.",
+      "dependencies": ["All pipeline modules"],
+      "interfaces": ["Pipeline trigger (HTTP endpoint)", "Schedule listener", "Status query API"]
+    },
+    {
+      "id": "CMP-002",
+      "name": "Amazon SP-API Sync Module",
+      "description": "Authenticates with Amazon Seller Central SP-API, retrieves unshipped FBM orders with pagination, fetches order items for each order, handles rate limiting and retries. Produces a list of orders and items for processing.",
+      "dependencies": ["Amazon SP-API SDK"],
+      "interfaces": ["syncOrders(): Order[]", "getOrderItems(orderId): OrderItem[]"]
+    },
+    {
+      "id": "CMP-003",
+      "name": "Order Processing Engine",
+      "description": "Classifies orders into batch types (single SKU qty 1/2/3+, mixed), segregates items by brand/SKU group, applies review rules to flag items, consolidates duplicate SKUs. Produces batch assignments and processing decisions.",
+      "dependencies": ["Review Rules Config"],
+      "interfaces": ["classifyOrders(orders): BatchAssignment[]", "applyReviewRules(items): FlaggedItem[]", "consolidateDuplicates(items): ConsolidatedItem[]"]
+    },
+    {
+      "id": "CMP-004",
+      "name": "PDF Document Generator",
+      "description": "Generates pick lists (by batch/brand group) and pack slips (per order) as PDFs using HTML templates rendered to PDF. Handles German locale formatting, barcode generation, and A4 page layout. Compiles batch PDFs with cover sheets.",
+      "dependencies": ["PDF rendering library (Puppeteer/PDFKit)", "Barcode generation library"],
+      "interfaces": ["generatePickList(batch): PDF", "generatePackSlip(order): PDF", "compileBatch(documents): PDF"]
+    },
+    {
+      "id": "CMP-005",
+      "name": "DHL Shipping Module",
+      "description": "Integrates with DHL shipping API to request and retrieve shipping labels. Handles authentication, label request with shipment details (weight, dimensions, addresses in German format), label retrieval as PDF, and batch compilation.",
+      "dependencies": ["DHL API client"],
+      "interfaces": ["generateLabel(order): PDF", "getLabelStatus(trackingId): Status", "compileBatch(labels): PDF"]
+    },
+    {
+      "id": "CMP-006",
+      "name": "Easy Ship Shipping Module",
+      "description": "Integrates with Easy Ship shipping API to request and retrieve shipping labels. Handles authentication, label request, label retrieval, and batch compilation. Mirrors DHL module interface for consistency.",
+      "dependencies": ["Easy Ship API client"],
+      "interfaces": ["generateLabel(order): PDF", "getLabelStatus(trackingId): Status", "compileBatch(labels): PDF"]
+    },
+    {
+      "id": "CMP-007",
+      "name": "Staff Dashboard",
+      "description": "Server-rendered web UI displaying pipeline status, order counts, flagged items, document summaries, and daily processing history. Provides administrative controls (pipeline trigger, configuration) for authorized users. Implements role-based access control.",
+      "dependencies": ["Orchestrator (status)", "Database (read models)"],
+      "interfaces": ["GET /dashboard", "GET /api/pipeline/status", "POST /api/pipeline/trigger", "GET /api/orders/flagged", "GET /api/logs"]
+    },
+    {
+      "id": "CMP-008",
+      "name": "Notification Service",
+      "description": "Sends alerts and notifications to configured channels (email, Slack, etc.) when pipeline failures occur, items require review, or processing completes with warnings. Uses configurable templates.",
+      "dependencies": ["Email transport (Nodemailer)", "Webhook client for Slack/Teams"],
+      "interfaces": ["sendAlert(type, details): void", "sendDailySummary(stats): void"]
+    },
+    {
+      "id": "CMP-009",
+      "name": "Configuration & Secrets Manager",
+      "description": "Manages application configuration (schedules, thresholds, carrier defaults) and encrypted storage of API credentials. Provides configuration to all modules at startup and supports hot-reload for non-sensitive config.",
+      "dependencies": ["Database (config store)", "Encryption library (crypto)"],
+      "interfaces": ["getConfig(key): value", "setConfig(key, value): void", "getSecret(key): decrypted value"]
+    },
+    {
+      "id": "CMP-010",
+      "name": "Logging Service",
+      "description": "Provides structured logging for all system operations. Writes to both database (searchable logs) and stdout (for container/PM2 capture). Supports log levels, correlation IDs per pipeline run, and retention policies.",
+      "dependencies": ["Database (log store)"],
+      "interfaces": ["log(level, operation, details): void", "queryLogs(filters): LogEntry[]", "archiveLogs(olderThan): void"]
+    }
+  ],
+  "data_model_guidance": [
+    {
+      "entity": "Order",
+      "description": "Represents an Amazon.de FBM order retrieved from SP-API.",
+      "key_fields": ["amazon_order_id (PK)", "purchase_date", "last_update_date", "order_status", "fulfillment_channel", "shipping_address (JSONB)", "total_amount", "payment_method_details", "marketplace_id (fixed: 'A1PA6795UKMFR9' for .de)", "pipeline_run_id", "processing_status", "batch_type", "flags (JSONB)"]
+    },
+    {
+      "entity": "OrderItem",
+      "description": "Individual line item within an order.",
+      "key_fields": ["id (PK)", "amazon_order_id (FK)", "seller_sku", "asin", "title", "quantity_ordered", "quantity_shipped", "item_price", "item_tax", "shipping_price", "shipping_tax", "gift_wrap_price", "condition_id", "brand", "sku_group"]
+    },
+    {
+      "entity": "BatchAssignment",
+      "description": "Records which batch each order or item was assigned to.",
+      "key_fields": ["id (PK)", "pipeline_run_id", "batch_type (enum: single_q1/single_q2/single_q3+/mixed)", "brand_group", "order_ids (JSONB array)", "item_count", "generated_documents (JSONB)", "status"]
+    },
+    {
+      "entity": "PipelineRun",
+      "description": "Tracks each execution of the pipeline.",
+      "key_fields": ["id (PK)", "started_at", "completed_at", "trigger_type (scheduled/manual)", "status (running/completed/failed)", "orders_retrieved", "orders_processed", "orders_flagged", "labels_generated_dhl", "labels_generated_easyship", "errors (JSONB array)", "correlation_id"]
+    },
+    {
+      "entity": "DocumentRecord",
+      "description": "Metadata for generated PDF documents.",
+      "key_fields": ["id (PK)", "pipeline_run_id", "document_type (pick_list/pack_slip/dhl_label/easyship_label/batch)", "batch_assignment_id", "file_path", "file_size_bytes", "page_count", "generated_at", "checksum"]
+    },
+    {
+      "entity": "ReviewFlag",
+      "description": "Records items flagged for manual review.",
+      "key_fields": ["id (PK)", "pipeline_run_id", "amazon_order_id", "seller_sku", "flag_reason", "flag_rule", "reviewed_by", "reviewed_at", "resolution (approved/rejected/pending)"]
+    },
+    {
+      "entity": "LogEntry",
+      "description": "Structured log for system operations.",
+      "key_fields": ["id (PK)", "timestamp", "level (info/warn/error/debug)", "pipeline_run_id (correlation)", "module", "operation", "message", "details (JSONB)", "order_id (nullable)", "duration_ms"]
+    },
+    {
+      "entity": "Configuration",
+      "description": "Key-value configuration store.",
+      "key_fields": ["key (PK)", "value (JSONB)", "description", "updated_at", "updated_by", "is_secret (boolean)"]
+    }
+  ],
+  "api_boundary_guidance": [
+    {
+      "direction": "inbound",
+      "endpoint": "POST /api/pipeline/trigger",
+      "auth": "admin role required",
+      "description": "Manually triggers the full order processing pipeline. Returns a pipeline run ID immediately. Processing happens asynchronously.",
+      "request_example": "{ \"trigger_type\": \"manual\" }",
+      "response_example": "{ \"run_id\": \"prn_20260613_001\", \"status\": \"started\" }"
+    },
+    {
+      "direction": "inbound",
+      "endpoint": "GET /api/pipeline/status/:runId",
+      "auth": "any authenticated user",
+      "description": "Returns the current status and stats for a specific pipeline run. Used by the dashboard for real-time updates.",
+      "response_example": "{ \"run_id\": \"prn_20260613_001\", \"status\": \"running\", \"progress\": { \"sync\": \"complete\", \"batching\": \"in_progress\", \"pdf_generation\": \"pending\", \"labels\": \"pending\" } }"
+    },
+    {
+      "direction": "inbound",
+      "endpoint": "GET /api/orders/flagged",
+      "auth": "any authenticated user",
+      "description": "Returns all items flagged for review in the current or latest pipeline run.",
+      "response_example": "{ \"flagged_items\": [{ \"order_id\": \"123-456\", \"sku\": \"PROD-001\", \"reason\": \"high_value\", \"amount\": 1250.00 }] }"
+    },
+    {
+      "direction": "inbound",
+      "endpoint": "POST /api/orders/flagged/:id/resolve",
+      "auth": "admin role required",
+      "description": "Resolves a flagged item (approve or reject), determining whether it proceeds to label generation or is excluded.",
+      "request_example": "{ \"resolution\": \"approved\", \"notes\": \"Verified with customer service\" }"
+    },
+    {
+      "direction": "inbound",
+      "endpoint": "GET /api/documents/:runId/:type",
+      "auth": "any authenticated user",
+      "description": "Returns list of generated documents for a pipeline run, filtered by type (pick_list, pack_slip, dhl_label, easyship_label, batch).",
+      "response_example": "{ \"documents\": [{ \"id\": \"doc_001\", \"type\": \"pick_list\", \"file_path\": \"/documents/prn_001/pick_list_batch_A.pdf\" }] }"
+    },
+    {
+      "direction": "inbound",
+      "endpoint": "GET /api/logs",
+      "auth": "admin role required",
+      "description": "Searchable log query endpoint. Supports filters: date range, level, module, pipeline_run_id, order_id, free text search.",
+      "query_params": "?from=2026-06-13&to=2026-06-13&level=error&module=amazon-sync&order_id=123-456"
+    },
+    {
+      "direction": "inbound",
+      "endpoint": "GET /api/config",
+      "auth": "admin role required",
+      "description": "Returns non-secret configuration values. Use separate endpoints for updating specific settings.",
+      "response_example": "{ \"schedule\": \"0 6 * * *\", \"review_threshold_amount\": 500, \"default_carrier\": \"dhl\" }"
+    },
+    {
+      "direction": "inbound",
+      "endpoint": "PUT /api/config/:key",
+      "auth": "admin role required",
+      "description": "Updates a configuration value. Non-secret values only. Some changes may require pipeline restart.",
+      "request_example": "{ \"value\": \"0 5 * * *\" }"
+    },
+    {
+      "direction": "inbound",
+      "endpoint": "GET /dashboard",
+      "auth": "any authenticated user",
+      "description": "Server-rendered dashboard HTML page. Data is fetched via embedded API calls server-side, or client-side via JS polling.",
+      "response": "HTML page with dashboard view"
+    }
+  ],
+  "implementation_slices": [
+    {
+      "id": "SLICE-001",
+      "title": "[Task] Amazon.de SP-API Integration Module",
+      "description": "Implement the Amazon Selling Partner API integration module. This includes: OAuth/IAM authentication flow with Amazon's security model, paginated order retrieval for FBM unshipped orders, order item fetching per order, rate limit handling with exponential backoff, error handling for API failures and token expiry, and a data transformation layer that maps Amazon's response structure to the internal Order/OrderItem data models.",
+      "suggested_order": 1,
+      "effort_estimate": "Medium (3-5 days)",
+      "files_affected": [
+        "src/modules/amazon-sp-api/client.js",
+        "src/modules/amazon-sp-api/auth.js",
+        "src/modules/amazon-sp-api/orders.js",
+        "src/modules/amazon-sp-api/order-items.js",
+        "src/modules/amazon-sp-api/transformers.js",
+        "src/modules/amazon-sp-api/rate-limiter.js",
+        "src/modules/amazon-sp-api/__tests__/"
+      ],
+      "acceptance_criteria_ids": ["AC-001", "AC-002"],
+      "functional_requirement_ids": ["FR-001", "FR-002"],
+      "non_functional_requirement_ids": ["NFR-001", "NFR-004", "NFR-006"]
+    },
+    {
+      "id": "SLICE-002",
+      "title": "[Task] Order Processing Engine - Batching, Segregation & Review Rules",
+      "description": "Implement the core order processing engine. This includes: batch classification algorithm (single SKU qty 1/2/3+, mixed/multi-line), brand/SKU group segregation logic, duplicate SKU consolidation, configurable review rule engine (high-value thresholds, address pattern matching, special handling flags), batch assignment data persistence, and pipeline state transitions for the processing stage.",
+      "suggested_order": 2,
+      "effort_estimate": "Medium (3-5 days)",
+      "files_affected": [
+        "src/modules/order-engine/classifier.js",
+        "src/modules/order-engine/batcher.js",
+        "src/modules/order-engine/segregator.js",
+        "src/modules/order-engine/duplicate-consolidator.js",
+        "src/modules/order-engine/review-rules.js",
+        "src/modules/order-engine/__tests__/"
+      ],
+      "acceptance_criteria_ids": ["AC-003", "AC-004", "AC-005", "AC-008"],
+      "functional_requirement_ids": ["FR-003", "FR-004", "FR-005", "FR-008"],
+      "non_functional_requirement_ids": ["NFR-001", "NFR-002", "NFR-006"]
+    },
+    {
+      "id": "SLICE-003",
+      "title": "[Task] PDF Document Generation (Pick Lists & Pack Slips)",
+      "description": "Implement the PDF generation module. This includes: HTML template creation for pick lists (organized by batch and brand/SKU group with item locations and quantities), HTML templates for pack slips (per order with German-formatted addresses, item details, barcode/QR code for tracking), PDF rendering via server-side library (Puppeteer or PDFKit), A4 page layout with proper margins, German locale formatting (date format DD.MM.YYYY, number format 1.234,56), batch PDF compilation with cover sheets, and file storage with database metadata.",
+      "suggested_order": 3,
+      "effort_estimate": "Medium (3-5 days)",
+      "files_affected": [
+        "src/modules/pdf-generator/renderer.js",
+        "src/modules/pdf-generator/templates/pick-list.html",
+        "src/modules/pdf-generator/templates/pack-slip.html",
+        "src/modules/pdf-generator/templates/cover-sheet.html",
+        "src/modules/pdf-generator/templates/partials/",
+        "src/modules/pdf-generator/batch-compiler.js",
+        "src/modules/pdf-generator/formatters.js",
+        "src/modules/pdf-generator/__tests__/"
+      ],
+      "acceptance_criteria_ids": ["AC-006", "AC-007", "AC-011"],
+      "functional_requirement_ids": ["FR-006", "FR-007", "FR-011"],
+      "non_functional_requirement_ids": ["NFR-001", "NFR-006"]
+    },
+    {
+      "id": "SLICE-004",
+      "title": "[Task] DHL Shipping Integration Module",
+      "description": "Implement the DHL shipping API integration. This includes: DHL authentication (API key/user credentials), shipment order creation with weight/dimensions (German domestic and international), shipping label request and retrieval as PDF, label format validation, DHL-specific address validation, batch label PDF compilation, error handling with retry logic, and tracking number capture for order records.",
+      "suggested_order": 4,
+      "effort_estimate": "Medium (4-6 days)",
+      "files_affected": [
+        "src/modules/dhl/client.js",
+        "src/modules/dhl/auth.js",
+        "src/modules/dhl/shipment.js",
+        "src/modules/dhl/label.js",
+        "src/modules/dhl/address-validator.js",
+        "src/modules/dhl/batch-compiler.js",
+        "src/modules/dhl/__tests__/"
+      ],
+      "acceptance_criteria_ids": ["AC-009"],
+      "functional_requirement_ids": ["FR-009"],
+      "non_functional_requirement_ids": ["NFR-001", "NFR-004", "NFR-006"]
+    },
+    {
+      "id": "SLICE-005",
+      "title": "[Task] Easy Ship Shipping Integration Module",
+      "description": "Implement the Easy Ship shipping API integration. This includes: Easy Ship authentication, shipment order creation, label request and retrieval as PDF, label format validation, batch label PDF compilation, error handling with retry logic, and tracking number capture. Module shall follow the same interface pattern as the DHL module to support the carrier routing engine.",
+      "suggested_order": 5,
+      "effort_estimate": "Medium (3-5 days)",
+      "files_affected": [
+        "src/modules/easyship/client.js",
+        "src/modules/easyship/auth.js",
+        "src/modules/easyship/shipment.js",
+        "src/modules/easyship/label.js",
+        "src/modules/easyship/batch-compiler.js",
+        "src/modules/easyship/__tests__/"
+      ],
+      "acceptance_criteria_ids": ["AC-010"],
+      "functional_requirement_ids": ["FR-010"],
+      "non_functional_requirement_ids": ["NFR-001", "NFR-004"]
+    },
+    {
+      "id": "SLICE-006",
+      "title": "[Task] Pipeline Orchestrator, Scheduler & State Management",
+      "description": "Implement the pipeline orchestration layer. This includes: background job queue setup (Bull/BullMQ with Redis or pg-boss), pipeline stage sequencing (sync → process → generate docs → generate labels), scheduled execution via cron (configurable time, timezone-aware for CET/CEST), manual trigger endpoint, pipeline state management (idle/running/completed/failed with progress per stage), catch-up logic for missed schedules, concurrent run prevention, carrier routing engine (configurable rules for DHL vs Easy Ship selection), and pipeline status API for the dashboard.",
+      "suggested_order": 6,
+      "effort_estimate": "Medium (3-5 days)",
+      "files_affected": [
+        "src/orchestrator/pipeline.js",
+        "src/orchestrator/scheduler.js",
+        "src/orchestrator/job-queue.js",
+        "src/orchestrator/carrier-router.js",
+        "src/orchestrator/state-machine.js",
+        "src/orchestrator/catch-up.js",
+        "src/orchestrator/__tests__/"
+      ],
+      "acceptance_criteria_ids": ["AC-015"],
+      "functional_requirement_ids": ["FR-015"],
+      "non_functional_requirement_ids": ["NFR-001", "NFR-003"]
+    },
+    {
+      "id": "SLICE-007",
+      "title": "[Task] Staff Dashboard Web UI with RBAC",
+      "description": "Build the web-based dashboard for VAs and operations staff. This includes: server-rendered HTML pages (Express + EJS or similar), pipeline status view with real-time polling/SSE, order processing summary (retrieved, batched, flagged, processed), flagged items review interface (list, filter, resolve for admins), generated documents list with download links, daily processing history calendar, pipeline manual trigger button (admin only), role-based access control (read-only vs admin roles), simple authentication (session-based or API key), responsive CSS for desktop use, and basic error states and loading indicators.",
+      "suggested_order": 7,
+      "effort_estimate": "Medium (4-6 days)",
+      "files_affected": [
+        "src/web/app.js",
+        "src/web/auth.js",
+        "src/web/rbac.js",
+        "src/web/routes/dashboard.js",
+        "src/web/routes/api.js",
+        "src/web/views/dashboard.ejs",
+        "src/web/views/flagged.ejs",
+        "src/web/views/documents.ejs",
+        "src/web/views/logs.ejs",
+        "src/web/views/layout.ejs",
+        "src/web/public/css/",
+        "src/web/public/js/"
+      ],
+      "acceptance_criteria_ids": ["AC-012"],
+      "functional_requirement_ids": ["FR-012"],
+      "non_functional_requirement_ids": ["NFR-005"]
+    },
+    {
+      "id": "SLICE-008",
+      "title": "[Task] Logging, Monitoring & Notification Infrastructure",
+      "description": "Implement the logging, monitoring, and notification subsystems. This includes: structured logging service with correlation IDs per pipeline run, database log storage with search/query API, stdout logging for container environments, health check endpoints (GET /health, GET /ready), error handling framework with retry logic (exponential backoff, max retries), notification delivery service (email via Nodemailer, Slack/Teams webhook support), daily processing summary email, log retention policy (90-day with archiving), and alert configuration for critical failures.",
+      "suggested_order": 8,
+      "effort_estimate": "Medium (3-4 days)",
+      "files_affected": [
+        "src/infrastructure/logger.js",
+        "src/infrastructure/error-handler.js",
+        "src/infrastructure/retry.js",
+        "src/infrastructure/notifications/email.js",
+        "src/infrastructure/notifications/webhook.js",
+        "src/infrastructure/notifications/templates/",
+        "src/infrastructure/health.js",
+        "src/infrastructure/log-query.js",
+        "src/infrastructure/__tests__/"
+      ],
+      "acceptance_criteria_ids": ["AC-013", "AC-014"],
+      "functional_requirement_ids": ["FR-013", "FR-014"],
+      "non_functional_requirement_ids": ["NFR-010"]
+    },
+    {
+      "id": "SLICE-009",
+      "title": "[Task] Configuration & Secrets Management",
+      "description": "Implement configuration and secrets management. This includes: database-backed configuration store (key-value with JSONB), configuration API endpoints (GET/PUT for non-secrets), encrypted secrets storage using AES-256-GCM, secrets loading from environment variables, configuration validation schema, hot-reload support for non-sensitive config (schedule, thresholds, carrier defaults), audit logging for configuration changes, and seed/migration scripts for initial configuration.",
+      "suggested_order": 9,
+      "effort_estimate": "Small (2-3 days)",
+      "files_affected": [
+        "src/infrastructure/config/store.js",
+        "src/infrastructure/config/secrets.js",
+        "src/infrastructure/config/validator.js",
+        "src/infrastructure/config/api-routes.js",
+        "src/infrastructure/config/seed.js",
+        "src/infrastructure/config/__tests__/"
+      ],
+      "acceptance_criteria_ids": [],
+      "functional_requirement_ids": [],
+      "non_functional_requirement_ids": ["NFR-004", "NFR-008"]
+    },
+    {
+      "id": "SLICE-010",
+      "title": "[Task] Database Schema, Migrations & Data Access Layer",
+      "description": "Implement the database foundation. This includes: PostgreSQL schema design with all entities (orders, order_items, batch_assignments, pipeline_runs, documents, review_flags, log_entries, configuration), migration scripts with up/down support, data access layer with repository pattern, query helpers for common operations (orders by status, logs by date range, pipeline runs by date), indexing strategy for query performance, and seed data for development/testing.",
+      "suggested_order": 0,
+      "effort_estimate": "Small (2-3 days)",
+      "files_affected": [
+        "src/db/migrations/",
+        "src/db/schema.sql",
+        "src/db/repositories/orders.js",
+        "src/db/repositories/pipeline-runs.js",
+        "src/db/repositories/batches.js",
+        "src/db/repositories/documents.js",
+        "src/db/repositories/logs.js",
+        "src/db/repositories/config.js",
+        "src/db/connection.js",
+        "src/db/seed.js"
+      ],
+      "acceptance_criteria_ids": [],
+      "functional_requirement_ids": [],
+      "non_functional_requirement_ids": ["NFR-001", "NFR-002", "NFR-009"]
+    }
+  ],
+  "deployment_guidance": {
+    "runtime": "Node.js (LTS 20+) with Express web framework",
+    "database": "PostgreSQL 14+",
+    "job_queue": "Bull/BullMQ with Redis 7+, or pg-boss (PostgreSQL-based queue)",
+    "pdf_generation": "Puppeteer (HTML-to-PDF) or PDFKit for Node.js",
+    "external_services": {
+      "amazon_sp_api": "Amazon Selling Partner API SDK for Node.js",
+      "dhl": "DHL Geschäftskundenversand API or DHL Parcel DE API",
+      "easy_ship": "Easy Ship REST API"
+    },
+    "containerization": "Docker with docker-compose for local dev; production deployment on existing infrastructure (VM or container orchestration)",
+    "ci_cd": "GitHub Actions for CI (lint, test, build); CD per existing infrastructure process",
+    "environment_variables": {
+      "NODE_ENV": "production|development|test",
+      "DATABASE_URL": "PostgreSQL connection string",
+      "REDIS_URL": "Redis connection string (if using Bull)",
+      "ENCRYPTION_KEY": "AES-256-GCM key (32 bytes, hex-encoded)",
+      "AMAZON_SP_API_CREDENTIALS": "JSON with client_id, client_secret, refresh_token, aws_access_key, aws_secret_key",
+      "DHL_API_CREDENTIALS": "JSON with api_key, account_number, user, password",
+      "EASY_SHIP_API_CREDENTIALS": "JSON with api_key, api_secret",
+      "NOTIFICATION_EMAIL_CONFIG": "SMTP connection settings",
+      "SLACK_WEBHOOK_URL": "Optional Slack webhook for alerts",
+      "SESSION_SECRET": "Web dashboard session encryption key",
+      "LOG_LEVEL": "info|debug|warn|error",
+      "PIPELINE_SCHEDULE": "cron expression (default: '0 6 * * *')",
+      "TZ": "Europe/Berlin"
+    }
+  }
+}
