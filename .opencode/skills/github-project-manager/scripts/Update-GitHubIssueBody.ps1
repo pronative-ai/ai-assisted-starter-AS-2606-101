@@ -14,17 +14,6 @@
 .PARAMETER Clean
     Cleans literal \n artifacts from existing body.
 #>
-[CmdletBinding()]
-param(
-    [string] $Owner,
-    [string] $Repo,
-    [int] $Number = 0,
-    [string] $Body = "",
-    [switch] $Append,
-    [switch] $Clean
-)
-
-$isDotSourced = $MyInvocation.InvocationName -eq '.'
 
 function Update-GitHubIssueBody {
     param(
@@ -66,15 +55,21 @@ function Update-GitHubIssueBody {
         $payload = @{ body = $Body }
     }
 
+    $jsonBody = $payload | ConvertTo-Json -Depth 3
     $result = Invoke-RestMethod -Uri "https://api.github.com/repos/$Owner/$Repo/issues/$Number" `
-        -Headers $headers -Method Patch -Body ($payload | ConvertTo-Json -Depth 3)
+        -Headers $headers -ContentType "application/json" -Method Patch -Body $jsonBody
 
-    Write-Output $result
+    $result
 }
 
-if (-not $isDotSourced) {
-    if (-not $Owner) { throw "Missing required parameter: Owner" }
-    if (-not $Repo) { throw "Missing required parameter: Repo" }
-    if ($Number -eq 0) { throw "Missing required parameter: Number" }
-    Update-GitHubIssueBody -Owner $Owner -Repo $Repo -Number $Number -Body $Body -Append:$Append -Clean:$Clean
+# When invoked directly (not dot-sourced), run the function
+if ($MyInvocation.InvocationName -ne '.') {
+    $params = @{}
+    for ($i = 0; $i -lt $args.Count; $i += 2) {
+        $key = $args[$i].Trim('-')
+        $val = $args[$i + 1]
+        if ($key -eq 'Append' -or $key -eq 'Clean') { $params[$key] = $true }
+        else { $params[$key] = $val }
+    }
+    Update-GitHubIssueBody @params
 }

@@ -14,17 +14,6 @@
 .PARAMETER ProjectNumber
     Project number (alternative to ProjectId).
 #>
-[CmdletBinding()]
-param(
-    [string] $Owner,
-    [string] $Repo,
-    [int] $IssueNumber = 0,
-    [string] $ProjectId = "",
-    [string] $OrgName = "",
-    [int] $ProjectNumber = 0
-)
-
-$isDotSourced = $MyInvocation.InvocationName -eq '.'
 
 function Add-IssueToProject {
     param(
@@ -43,7 +32,6 @@ function Add-IssueToProject {
         $json = $queryObj | ConvertTo-Json -Compress | gh api graphql --input - 2>&1
         $parsed = $json | ConvertFrom-Json
         $ProjectId = $parsed.data.organization.projectV2.id
-        Write-Output "Resolved project ID: $ProjectId"
     }
 
     if (-not $ProjectId) {
@@ -56,15 +44,14 @@ function Add-IssueToProject {
     $nodeId = $parsed.data.repository.issue.id
 
     $mutationObj = @{ query = "mutation { addProjectV2ItemById(input: { projectId: `"$ProjectId`" contentId: `"$nodeId`" }) { item { id } } }" }
-    $result = $mutationObj | ConvertTo-Json -Compress | gh api graphql --input - 2>&1
-
-    Write-Output "Added issue #$IssueNumber to project"
-    Write-Output $result
+    $mutationObj | ConvertTo-Json -Compress | gh api graphql --input - 2>&1
 }
 
-if (-not $isDotSourced) {
-    if (-not $Owner) { throw "Missing required parameter: Owner" }
-    if (-not $Repo) { throw "Missing required parameter: Repo" }
-    if ($IssueNumber -eq 0) { throw "Missing required parameter: IssueNumber" }
-    Add-IssueToProject -Owner $Owner -Repo $Repo -IssueNumber $IssueNumber -ProjectId $ProjectId -OrgName $OrgName -ProjectNumber $ProjectNumber
+# When invoked directly (not dot-sourced), run the function
+if ($MyInvocation.InvocationName -ne '.') {
+    $params = @{}
+    for ($i = 0; $i -lt $args.Count; $i += 2) {
+        $params[$args[$i].Trim('-')] = $args[$i + 1]
+    }
+    Add-IssueToProject @params
 }

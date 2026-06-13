@@ -6,13 +6,6 @@
 .PARAMETER ProjectNumber
     Project number (from URL: /orgs/{org}/projects/{number}).
 #>
-[CmdletBinding()]
-param(
-    [string] $OrgName,
-    [int] $ProjectNumber = 0
-)
-
-$isDotSourced = $MyInvocation.InvocationName -eq '.'
 
 function Get-ProjectId {
     param(
@@ -25,12 +18,11 @@ function Get-ProjectId {
     $parsed = $json | ConvertFrom-Json
 
     $project = $parsed.data.organization.projectV2
-    Write-Output "Title: $($project.title)"
-    Write-Output "ID: $($project.id)"
+    $project.id
 }
 
-if (-not $isDotSourced) {
-    if (-not $OrgName) { throw "Missing required parameter: OrgName" }
-    if ($ProjectNumber -eq 0) { throw "Missing required parameter: ProjectNumber" }
-    Get-ProjectId -OrgName $OrgName -ProjectNumber $ProjectNumber
+# When invoked directly (not dot-sourced), run the function
+if ($MyInvocation.InvocationName -ne '.') {
+    if ($args.Count -lt 2) { throw "Usage: $(Split-Path -Leaf $PSCommandPath) <OrgName> <ProjectNumber>" }
+    Get-ProjectId -OrgName $args[0] -ProjectNumber $args[1]
 }

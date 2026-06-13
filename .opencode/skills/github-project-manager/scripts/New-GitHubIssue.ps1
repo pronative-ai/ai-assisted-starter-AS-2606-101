@@ -8,23 +8,12 @@
 .PARAMETER Title
     Issue title.
 .PARAMETER Body
-    Issue body (markdown). Use `n for newlines.
+    Issue body (markdown).
 .PARAMETER Labels
     Label names (must exist in repo).
 .PARAMETER ProjectId
     Project v2 node ID to add the issue to (optional).
 #>
-[CmdletBinding()]
-param(
-    [string] $Owner,
-    [string] $Repo,
-    [string] $Title,
-    [string] $Body,
-    [string[]] $Labels = @(),
-    [string] $ProjectId = ""
-)
-
-$isDotSourced = $MyInvocation.InvocationName -eq '.'
 
 function New-GitHubIssue {
     param(
@@ -47,22 +36,23 @@ function New-GitHubIssue {
     $payload = @{ title = $Title; body = $Body }
     if ($Labels.Count -gt 0) { $payload.labels = $Labels }
 
+    $jsonBody = $payload | ConvertTo-Json -Depth 3
     $issue = Invoke-RestMethod -Uri "https://api.github.com/repos/$Owner/$Repo/issues" `
-        -Headers $headers -Method Post -Body ($payload | ConvertTo-Json -Depth 3)
+        -Headers $headers -ContentType "application/json" -Method Post -Body $jsonBody
 
-    Write-Output $issue
+    $issue
 
     if ($ProjectId -and $issue.node_id) {
         $mutation = @{ query = "mutation { addProjectV2ItemById(input: { projectId: `"$ProjectId`" contentId: `"$($issue.node_id)`" }) { item { id } } }" }
         $mutation | ConvertTo-Json -Compress | gh api graphql --input - 2>$null
-        Write-Output "Added to project: $ProjectId"
     }
 }
 
-if (-not $isDotSourced) {
-    if (-not $Owner) { throw "Missing required parameter: Owner" }
-    if (-not $Repo) { throw "Missing required parameter: Repo" }
-    if (-not $Title) { throw "Missing required parameter: Title" }
-    if (-not $Body) { throw "Missing required parameter: Body" }
-    New-GitHubIssue -Owner $Owner -Repo $Repo -Title $Title -Body $Body -Labels $Labels -ProjectId $ProjectId
+# When invoked directly (not dot-sourced), run the function
+if ($MyInvocation.InvocationName -ne '.') {
+    $params = @{}
+    for ($i = 0; $i -lt $args.Count; $i += 2) {
+        $params[$args[$i].Trim('-')] = $args[$i + 1]
+    }
+    New-GitHubIssue @params
 }
