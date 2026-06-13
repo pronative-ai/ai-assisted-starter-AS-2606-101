@@ -64,13 +64,31 @@ See `references/adlc-agents.json` → `BusinessIntentRequest` for the full schem
 
 Each business intent produces the following issue structure:
 
-| Level | Type | Content | Label |
-|-------|------|---------|-------|
-| 1 | **Epic** | One issue representing the overall business intent. Contains the full specification summary, scope, and references to child user stories. | `epic` |
-| 2 | **User Story** | One issue per distinct user need, phrased as "As a <persona>, I want <capability> so that <benefit>". Contains the acceptance criteria relevant to that story. References parent Epic via `Epic: #<number>`. | `user-story` |
-| 3 | **Task** | One issue per implementation slice from Stage 3. Each task covers a specific technical slice (e.g., frontend JSX change, CSS styling, tests, a11y). References parent User Story via `Story: #<number>`. | `task` |
+| Level | Type | Title Prefix | Label |
+|-------|------|--------------|-------|
+| 1 | **Epic** | `[Epic]` | `epic` |
+| 2 | **User Story** | `[User Story]` | `user-story` |
+| 3 | **Task** | `[Task]` | `task` |
 
-The Epic body MUST include a story checklist (e.g., `- [ ] #2 Request count display`). Each User Story body MUST include an `Epic:` reference and a task checklist. Each Task body MUST include a `Story:` reference pointing to the parent user story.
+### Epic
+- One issue representing the overall business intent.
+- Contains the full specification summary, scope, architecture overview, and references to child user stories.
+- Body MUST include a story checklist (e.g., `- [ ] #2 [User Story] Show request count`).
+
+### User Story
+- One issue per distinct user need, phrased as "As a <persona>, I want <capability> so that <benefit>".
+- Contains the acceptance criteria relevant to that story.
+- Body MUST include `Epic: #<epic-number>` reference and a task checklist (e.g., `- [ ] #3 [Task] Add JSX count display`).
+
+### Task
+- One issue per implementation slice from Stage 3.
+- Each task covers a specific technical slice (e.g., frontend JSX change, CSS styling, tests, a11y).
+- Body MUST include `Story: #<story-number>` reference pointing to the parent user story.
+- Body MUST contain ALL of the following inline:
+  - Related **functional requirements** (from Stage 1) that this task implements
+  - Related **non-functional requirements** (from Stage 1) that this task addresses  
+  - Full **acceptance criteria** text (not just IDs) relevant to this slice
+  - Implementation description and architecture context
 
 ## Workflow
 
@@ -92,8 +110,10 @@ The Epic body MUST include a story checklist (e.g., `- [ ] #2 Request count disp
    | | — | parent Epic number | `Epic: #<epic-number>` |
    | | — | compiled child issue numbers | Task Checklist |
 | **Task** (per slice) | `specification-3.response.json` | `implementation_slices[n].title`, `.description` | Title & Description |
-| | `specification-2.response.json` | `acceptance_criteria[]` (filtered by slice) | Acceptance Criteria (inline, not by reference ID) |
-| | `specification-3.response.json` | `implementation_slices[n].related_acceptance_criteria[]`, `.suggested_order` | Slice Metadata |
+| | `specification-1.response.json` | `functional_requirements[]` (filtered to slice) | Related Functional Requirements |
+| | `specification-1.response.json` | `non_functional_requirements[]` (filtered to slice) | Related Non-Functional Requirements |
+| | `specification-2.response.json` | `acceptance_criteria[]` (filtered to slice) | Acceptance Criteria (inline, not by reference ID) |
+| | `specification-3.response.json` | `implementation_slices[n].suggested_order` | Slice Metadata |
 | | `specification-3.response.json` | `component_model[]`, `api_boundary_guidance[]`, `data_model_guidance[]` | Architecture Context |
 | | — | parent User Story number | `Story: #<story-number>` |
 
@@ -118,13 +138,18 @@ The Epic body MUST include a story checklist (e.g., `- [ ] #2 Request count disp
    > ```
    > Or use `Invoke-RestMethod` (REST API) directly to avoid shell quoting issues altogether.
 
-   a. Create the **Epic** issue with its compiled body — capture its issue number
-   b. Create each **User Story** issue with `Epic: #<epic-number>` in body — capture its issue number
-   c. Create each **Task** issue with `Story: #<story-number>` in body — each Task MUST include acceptance criteria inline (full text, not just IDs)
-   d. Update the Epic body with the story checklist (e.g., `- [ ] #2 User story title`)
-   e. Update the User Story body with the task checklist (e.g., `- [ ] #4 JSX change`)
+   a. Create the **Epic** issue — prefix title with `[Epic]` — capture its issue number
+   b. Create each **User Story** issue — prefix title with `[User Story]`, include `Epic: #<epic-number>` in body — capture its issue number
+   c. Create each **Task** issue — prefix title with `[Task]`, include `Story: #<story-number>` in body. Each Task body MUST contain:
+      - Related **functional requirements** (from specification-1.response.json) that this task implements
+      - Related **non-functional requirements** (from specification-1.response.json) that this task addresses
+      - Full **acceptance criteria** text (not just IDs), filtered to those relevant for this slice
+      - Implementation description, files affected, and architecture context (from specification-3.response.json)
+   d. Update the Epic body with the story checklist (e.g., `- [ ] #2 [User Story] Show request count`)
+   e. Update the User Story body with the task checklist (e.g., `- [ ] #4 [Task] Add JSX count display`)
    f. Add all issues to the project board (see [Get-ProjectId](../github-project-manager/SKILL.md#scripts) / [Add-IssueToProject](../github-project-manager/SKILL.md#scripts))
    g. Print summary with all issue URLs
+   h. Verify each issue on GitHub has the correct title prefix, cross-references, and complete body content
 
 ## API Reference
 
