@@ -126,7 +126,7 @@ After all three stages are completed AND the user has approved all deliverables:
 
 4. Create each **Task** issue:
    - Use `gh issue create --repo pronative-ai/<repo> --title "<task-title>" --body "<task-body>\n\nStory: #<story-number>" --label "task"`.
-   - If the `github-project-manager` skill scripts are available, use `New-GitHubIssue` instead.
+   - If the `github-project-manager` skill scripts are available, use `node .opencode/skills/github-project-manager/scripts/new-github-issue.js` instead.
 
 5. Update the **Epic** issue body to append a story checklist with actual issue numbers:
    - e.g., `### User Stories\n- [ ] #2 As a platform engineer, I want to see the total number of visible service requests`

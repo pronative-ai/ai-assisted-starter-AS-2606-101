@@ -16,34 +16,27 @@ Manages GitHub Issues and Projects (v2) via `gh` CLI and REST/GraphQL APIs.
 
 ## Scripts (`.opencode/skills/github-project-manager/scripts/`)
 
-Dot-source first to load all functions into your session:
-```powershell
-. .opencode/skills/github-project-manager/scripts/New-GitHubIssue.ps1
-. .opencode/skills/github-project-manager/scripts/Update-GitHubIssueBody.ps1
-. .opencode/skills/github-project-manager/scripts/Add-IssueToProject.ps1
-. .opencode/skills/github-project-manager/scripts/Get-ProjectId.ps1
-```
-Each script supports dual-mode: **dot-sourcing** defines a function; **direct invocation** runs immediately.
+Each script can be invoked directly via Node.js or imported as a module.
 
 | Script | Purpose |
 |--------|---------|
-| `New-GitHubIssue` | Create issue with labels + optional project board add |
-| `Update-GitHubIssueBody` | Replace, append, or clean (`-Clean`) issue body |
-| `Add-IssueToProject` | Add existing issue to project (by ID or org+number) |
-| `Get-ProjectId` | Lookup project v2 node ID by org+number |
+| `new-github-issue.js` | Create issue with labels + optional project board add |
+| `update-github-issue-body.js` | Replace, append, or clean (`--clean`) issue body |
+| `add-issue-to-project.js` | Add existing issue to project (by ID or org+number) |
+| `get-project-id.js` | Lookup project v2 node ID by org+number |
 
 ### Examples
 
 ```powershell
 # Create issue + add to project
-$issue = New-GitHubIssue -Owner myorg -Repo myrepo -Title "Bug: login crash" `
-  -Body "Steps:\n1. Go to /login" -Labels @("bug") -ProjectId "PVT_kw..."
+$issue = node scripts\new-github-issue.js --owner myorg --repo myrepo --title "Bug: login crash" `
+  --body "Steps:\n1. Go to /login" --Labels bug --projectId "PVT_kw..."
 
 # Append to existing body
-Update-GitHubIssueBody -Owner myorg -Repo myrepo -Number 4 -Body "## Notes`nAdded later" -Append
+node scripts\update-github-issue-body.js --owner myorg --repo myrepo --number 4 --body "## Notes\nAdded later" --append
 
 # Add issue to project by org+number
-Add-IssueToProject -Owner myorg -Repo myrepo -IssueNumber 4 -OrgName myorg -ProjectNumber 3
+node scripts\add-issue-to-project.js --owner myorg --repo myrepo --issueNumber 4 --orgName myorg --projectNumber 3
 ```
 
 ## Manual API Operations (when scripts aren't available)

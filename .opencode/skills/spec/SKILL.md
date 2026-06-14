@@ -122,21 +122,12 @@ Each business intent produces the following issue structure:
 4. Propagate issues to GitHub using the [github-project-manager](../github-project-manager/SKILL.md) scripts (GitHub operations only — this skill handles all ADLC API calls):
 
    ```powershell
-   # Dot-source the scripts (each defines a function with the same name)
-   . .opencode/skills/github-project-manager/scripts/New-GitHubIssue.ps1
-   . .opencode/skills/github-project-manager/scripts/Update-GitHubIssueBody.ps1
-   . .opencode/skills/github-project-manager/scripts/Get-ProjectId.ps1
-   . .opencode/skills/github-project-manager/scripts/Add-IssueToProject.ps1
+   # Invoke the JS scripts via Node.js
+   node .opencode/skills/github-project-manager/scripts/new-github-issue.js --owner myorg --repo myrepo --title "Title" --body "Body" --labels bug
+   node .opencode/skills/github-project-manager/scripts/update-github-issue-body.js --owner myorg --repo myrepo --number 1 --body "New body"
+   node .opencode/skills/github-project-manager/scripts/get-project-id.js --orgName myorg --projectNumber 3
+   node .opencode/skills/github-project-manager/scripts/add-issue-to-project.js --owner myorg --repo myrepo --issueNumber 1 --projectId "PVT_kw..."
    ```
-
-   > **⚠️ Body content from heredocs**: PowerShell heredocs (`@' '@`) do NOT pipe reliably to `gh issue create --body-file -`. Always write body content to a temp file and pass it via `@`file or use `gh api --field body=@tempFile`:
-   > ```powershell
-   > $tempFile = [System.IO.Path]::GetTempFileName()
-   > $body | Out-File -FilePath $tempFile -Encoding utf8
-   > gh api "repos/$Owner/$Repo/issues" --method POST --field "title=$Title" --field "body=@$tempFile" --field "labels[]=$Label"
-   > Remove-Item -LiteralPath $tempFile -Force
-   > ```
-   > Or use `Invoke-RestMethod` (REST API) directly to avoid shell quoting issues altogether.
 
    a. Create the **Epic** issue — prefix title with `[Epic]` — capture its issue number
    b. Create each **User Story** issue — prefix title with `[User Story]`, include `Epic: #<epic-number>` in body — capture its issue number
@@ -147,7 +138,7 @@ Each business intent produces the following issue structure:
       - Implementation description, files affected, and architecture context (from specification-3.response.json)
    d. Update the Epic body with the story checklist (e.g., `- [ ] #2 [User Story] Show request count`)
    e. Update the User Story body with the task checklist (e.g., `- [ ] #4 [Task] Add JSX count display`)
-   f. Add all issues to the project board (see [Get-ProjectId](../github-project-manager/SKILL.md#scripts) / [Add-IssueToProject](../github-project-manager/SKILL.md#scripts))
+   f. Add all issues to the project board (see [get-project-id](../github-project-manager/SKILL.md#scripts) / [add-issue-to-project](../github-project-manager/SKILL.md#scripts))
    g. Print summary with all issue URLs
    h. Verify each issue on GitHub has the correct title prefix, cross-references, and complete body content
 
