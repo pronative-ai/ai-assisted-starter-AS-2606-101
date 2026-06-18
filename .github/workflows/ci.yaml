@@ -12,35 +12,49 @@ jobs:
     defaults:
       run:
         working-directory: src/backend
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
     steps:
       - uses: actions/checkout@v4
-      - uses: github/codeql-action/init@v3
-        with:
-          languages: csharp
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "10.0.x"
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: csharp
+          queries: security-and-quality
       - run: dotnet restore
       - run: dotnet build --no-restore --configuration Release
       - run: dotnet test --no-build --configuration Release
       - uses: github/codeql-action/analyze@v3
+        with:
+          category: "code-scanning:backend"
 
   frontend:
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: src/frontend
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
     steps:
       - uses: actions/checkout@v4
-      - uses: github/codeql-action/init@v3
-        with:
-          languages: javascript-typescript
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
           cache: "npm"
           cache-dependency-path: src/frontend/package-lock.json
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+          queries: security-and-quality
       - run: npm ci
       - run: npm run build
       - run: npm test --if-present
       - uses: github/codeql-action/analyze@v3
+        with:
+          category: "code-scanning:frontend"
