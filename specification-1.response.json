@@ -1,0 +1,114 @@
+{
+  "stage": 1,
+  "endpoint": "/api/requirements/analyze",
+  "request_payload": {
+    "business_idea": "The Service Request Tracker shows the list of service requests, but platform engineers cannot quickly see how many requests are currently displayed.",
+    "target_users": "Platform Engineers",
+    "business_goal": "Enable platform engineers to quickly understand the current workload by seeing the total number of visible service requests.",
+    "known_constraints": "Keep as a small frontend-only change; do not introduce a new framework; keep the change suitable for a single pull request; no backend or database changes; no authentication changes; no filtering or sorting; no new dashboard page.",
+    "existing_context": "The starter app already displays a list of service requests on the frontend. The existing request creation flow is already in place and should remain unchanged.",
+    "scope_level": "feature"
+  },
+  "response": {
+    "requirement_summary": "Show the total count of currently visible service requests above the list in the Service Request Tracker frontend. This count must update dynamically when the request list changes (e.g., after adding or removing requests). The change is purely a frontend enhancement — no backend, database, or API layer modifications are required. The goal is to give platform engineers immediate visibility into workload size without needing to manually count rows or infer volume from scroll position.",
+    "functional_requirements": [
+      {
+        "id": "FR-001",
+        "title": "Display visible request count",
+        "description": "The system SHALL display the total number of currently visible service requests above the request list.",
+        "priority": "High",
+        "category": "UI Enhancement"
+      },
+      {
+        "id": "FR-002",
+        "title": "Dynamic count update",
+        "description": "The displayed count SHALL update automatically when the list of visible service requests changes (e.g., a new request is created, or an existing request is removed from the view).",
+        "priority": "High",
+        "category": "UI Enhancement"
+      },
+      {
+        "id": "FR-003",
+        "title": "Zero-state handling",
+        "description": "When no service requests are visible, the system SHALL display a count of '0' above the list, not an error or empty state.",
+        "priority": "Medium",
+        "category": "Edge Case"
+      },
+      {
+        "id": "FR-004",
+        "title": "Count placement",
+        "description": "The count SHALL be displayed above the request list and visually associated with the list so that users can immediately connect the number to the visible items.",
+        "priority": "Medium",
+        "category": "Layout"
+      },
+      {
+        "id": "FR-005",
+        "title": "Accessible count display",
+        "description": "The count element SHALL be accessible via screen readers and other assistive technologies, using appropriate ARIA attributes or semantic HTML.",
+        "priority": "Medium",
+        "category": "Accessibility"
+      }
+    ],
+    "non_functional_requirements": [
+      {
+        "id": "NFR-001",
+        "title": "Performance — no re-render overhead",
+        "description": "The count display SHALL NOT introduce noticeable re-render overhead. The count computation SHALL use the existing list data (e.g., array length) and SHALL NOT trigger additional API calls or cause layout thrashing.",
+        "priority": "High",
+        "category": "Performance"
+      },
+      {
+        "id": "NFR-002",
+        "title": "Maintainability — minimal code change",
+        "description": "The implementation SHALL be contained within existing frontend files/component tree. No new component libraries, state management tools, or frameworks SHALL be introduced.",
+        "priority": "High",
+        "category": "Maintainability"
+      },
+      {
+        "id": "NFR-003",
+        "title": "Consistency — visual design",
+        "description": "The count display SHALL follow the existing application design system (typography, colors, spacing) and NOT introduce visual styles inconsistent with the current UI.",
+        "priority": "Low",
+        "category": "UI Consistency"
+      },
+      {
+        "id": "NFR-004",
+        "title": "Reliability — count accuracy",
+        "description": "The count SHALL always reflect the exact number of items rendered in the visible list. There SHALL be no off-by-one errors or stale counts after list mutations.",
+        "priority": "High",
+        "category": "Reliability"
+      }
+    ],
+    "scope_constraints": [
+      "Frontend-only change — no backend, database, or API modifications",
+      "Must not introduce new frameworks or dependencies",
+      "Single pull request — the entire change must be reviewable in one PR",
+      "Existing request creation flow must remain unchanged",
+      "No new dashboard or page — enhancement lives on the existing view"
+    ],
+    "assumptions": [
+      "The request list data is already available as an in-memory array/collection in the frontend component",
+      "The list re-renders (or the component receives updated props/state) when items change, so the count can derive from the same source",
+      "The project uses a modern frontend stack (e.g., React, Vue, or similar) where derived state from props/state is idiomatic",
+      "No backend pagination changes are needed since this is only a count of currently visible items"
+    ],
+    "out_of_scope": [
+      "Backend/database changes",
+      "Authentication or authorization changes",
+      "Filtering, sorting, or search functionality",
+      "New dashboard pages or routes",
+      "Export or reporting features",
+      "Request detail or individual item metrics"
+    ],
+    "open_questions": [
+      "Should the count include a label (e.g., 'Showing N requests') or just the number?",
+      "Should the count be pluralized (e.g., '1 request' vs 'N requests')?",
+      "In what format should the count appear (e.g., badge, text, heading)?"
+    ],
+    "epic_candidate": {
+      "title": "Show Request Count",
+      "description": "Add a visible count of service requests above the list so platform engineers can quickly assess workload volume at a glance.",
+      "label": "epic"
+    }
+  },
+  "human_readable": "=== STAGE 1: REQUIREMENTS ANALYSIS ===\n\nBusiness Intent: Show Request Count\n\nSummary:\nShow the total count of currently visible service requests above the list in the Service Request Tracker frontend. The count must update dynamically when the request list changes. This is a purely frontend enhancement.\n\nFunctional Requirements:\n- FR-001: Display visible request count (High)\n- FR-002: Dynamic count update (High)\n- FR-003: Zero-state handling (Medium)\n- FR-004: Count placement (Medium)\n- FR-005: Accessible count display (Medium)\n\nNon-Functional Requirements:\n- NFR-001: Performance — no re-render overhead (High)\n- NFR-002: Maintainability — minimal code change (High)\n- NFR-003: Consistency — visual design (Low)\n- NFR-004: Reliability — count accuracy (High)\n\nEpic Candidate: [Epic] Show Request Count\n\nOpen Questions:\n1. Should the count include a label ('Showing N requests') or just the number?\n2. Should the count be pluralized?\n3. In what format should the count appear (badge, text, heading)?"
+}

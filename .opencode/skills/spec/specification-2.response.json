@@ -1,0 +1,250 @@
+{
+  "stage": 2,
+  "endpoint": "/api/acceptance-criteria/generate",
+  "request_payload": {
+    "requirement_summary": "Show the total count of currently visible service requests above the list in the Service Request Tracker frontend. This count must update dynamically when the request list changes (e.g., after adding or removing requests). The change is purely a frontend enhancement — no backend, database, or API layer modifications are required.",
+    "functional_requirements": [
+      { "id": "FR-001", "title": "Display visible request count", "description": "The system SHALL display the total number of currently visible service requests above the request list.", "priority": "High", "category": "UI Enhancement" },
+      { "id": "FR-002", "title": "Dynamic count update", "description": "The displayed count SHALL update automatically when the list of visible service requests changes.", "priority": "High", "category": "UI Enhancement" },
+      { "id": "FR-003", "title": "Zero-state handling", "description": "When no service requests are visible, the system SHALL display a count of '0' above the list.", "priority": "Medium", "category": "Edge Case" },
+      { "id": "FR-004", "title": "Count placement", "description": "The count SHALL be displayed above the request list and visually associated with the list.", "priority": "Medium", "category": "Layout" },
+      { "id": "FR-005", "title": "Accessible count display", "description": "The count element SHALL be accessible via screen readers using appropriate ARIA attributes or semantic HTML.", "priority": "Medium", "category": "Accessibility" }
+    ],
+    "non_functional_requirements": [
+      { "id": "NFR-001", "title": "Performance — no re-render overhead", "description": "The count display SHALL NOT introduce noticeable re-render overhead and SHALL use existing list data.", "priority": "High", "category": "Performance" },
+      { "id": "NFR-002", "title": "Maintainability — minimal code change", "description": "Implementation SHALL be contained within existing frontend files.", "priority": "High", "category": "Maintainability" },
+      { "id": "NFR-003", "title": "Consistency — visual design", "description": "The count display SHALL follow the existing application design system.", "priority": "Low", "category": "UI Consistency" },
+      { "id": "NFR-004", "title": "Reliability — count accuracy", "description": "The count SHALL always reflect the exact number of items rendered in the visible list.", "priority": "High", "category": "Reliability" }
+    ],
+    "scope_constraints": ["Frontend-only", "No new frameworks", "Single PR", "Keep creation flow unchanged", "No new dashboard"],
+    "assumptions": ["List data available as in-memory array", "List re-renders on changes", "Modern frontend stack (React/Vue/etc.)", "No backend pagination changes"],
+    "out_of_scope": ["Backend/database changes", "Authentication", "Filtering/sorting", "New pages", "Export/reporting"],
+    "open_questions": ["Label format? ('Showing N requests' vs just number)", "Pluralization?", "Display format (badge, text, heading)?"],
+    "epic_candidate": { "title": "Show Request Count", "description": "Add a visible count of service requests above the list so platform engineers can quickly assess workload volume at a glance.", "label": "epic" }
+  },
+  "response": {
+    "acceptance_criteria": [
+      {
+        "id": "AC-001",
+        "description": "A count displaying the number of visible service requests is rendered above the request list.",
+        "covers_requirement": "FR-001"
+      },
+      {
+        "id": "AC-002",
+        "description": "The displayed count updates automatically when a new service request is added and appears in the list.",
+        "covers_requirement": "FR-002"
+      },
+      {
+        "id": "AC-003",
+        "description": "The displayed count updates automatically when a service request is removed from the visible list.",
+        "covers_requirement": "FR-002"
+      },
+      {
+        "id": "AC-004",
+        "description": "When the list contains no visible requests, the count displays '0' (or '0 requests').",
+        "covers_requirement": "FR-003"
+      },
+      {
+        "id": "AC-005",
+        "description": "The count is positioned above the request list and is visually associated with it (e.g., aligned with the list container, using consistent spacing).",
+        "covers_requirement": "FR-004"
+      },
+      {
+        "id": "AC-006",
+        "description": "The count element is announced by screen readers when the page loads and when the count changes.",
+        "covers_requirement": "FR-005"
+      },
+      {
+        "id": "AC-007",
+        "description": "No additional API calls or network requests are made to compute or update the count.",
+        "covers_requirement": "NFR-001"
+      },
+      {
+        "id": "AC-008",
+        "description": "The count always matches the number of list items rendered in the DOM (no off-by-one or stale values).",
+        "covers_requirement": "NFR-004"
+      }
+    ],
+    "given_when_then": [
+      {
+        "id": "GWT-001",
+        "scenario": "View request count on page load",
+        "given": "The Service Request Tracker page is loaded with 5 service requests visible in the list",
+        "when": "the page finishes rendering",
+        "then": "a count of '5' (or '5 requests') is displayed above the list"
+      },
+      {
+        "id": "GWT-002",
+        "scenario": "Count updates after adding a request",
+        "given": "the request list currently shows 3 visible requests and a count of '3'",
+        "when": "a new service request is created and appears in the list, making it 4 visible items",
+        "then": "the displayed count updates to '4'"
+      },
+      {
+        "id": "GWT-003",
+        "scenario": "Count updates after request removal",
+        "given": "the request list currently shows 5 visible requests and a count of '5'",
+        "when": "a request is removed and the visible list now has 4 items",
+        "then": "the displayed count updates to '4'"
+      },
+      {
+        "id": "GWT-004",
+        "scenario": "Zero state display",
+        "given": "the Service Request Tracker page is loaded with no service requests in the list",
+        "when": "the page finishes rendering",
+        "then": "a count of '0' (or '0 requests') is displayed above the empty list"
+      },
+      {
+        "id": "GWT-005",
+        "scenario": "Screen reader announces count on load",
+        "given": "a user accesses the page using a screen reader",
+        "when": "the page loads and the request list renders",
+        "then": "the screen reader announces the count (e.g., '5 requests' or 'Showing 5 requests')"
+      },
+      {
+        "id": "GWT-006",
+        "scenario": "Screen reader announces count change",
+        "given": "a screen reader user is on the page with a visible count of '3'",
+        "when": "a new request is added and the count changes to '4'",
+        "then": "the screen reader announces the updated count"
+      }
+    ],
+    "verification_checks": [
+      {
+        "id": "VC-001",
+        "description": "Verify that the count element exists in the DOM and is positioned above the request list container.",
+        "type": "Visual/Manual"
+      },
+      {
+        "id": "VC-002",
+        "description": "Verify that the count matches the length of the rendered list array/data source.",
+        "type": "Unit Test"
+      },
+      {
+        "id": "VC-003",
+        "description": "Verify that adding an item to the list increments the count by exactly 1.",
+        "type": "Integration Test"
+      },
+      {
+        "id": "VC-004",
+        "description": "Verify that removing an item from the list decrements the count by exactly 1.",
+        "type": "Integration Test"
+      },
+      {
+        "id": "VC-005",
+        "description": "Verify that no network requests are triggered when the count updates.",
+        "type": "Integration Test"
+      },
+      {
+        "id": "VC-006",
+        "description": "Verify that the count element has appropriate ARIA attributes (e.g., aria-live='polite' or role='status').",
+        "type": "Automated (a11y check)"
+      },
+      {
+        "id": "VC-007",
+        "description": "Verify that the count reads '0' or '0 requests' when the list is empty.",
+        "type": "Unit Test"
+      }
+    ],
+    "edge_cases": [
+      {
+        "id": "EC-001",
+        "description": "Empty list: count shows '0' — no crash, no blank, no error message.",
+        "severity": "Medium"
+      },
+      {
+        "id": "EC-002",
+        "description": "Single item: count shows '1' with grammatically correct singular label (e.g., '1 request' not '1 requests').",
+        "severity": "Low"
+      },
+      {
+        "id": "EC-003",
+        "description": "Very large list (e.g., 10,000+ items): count displays correctly without performance degradation.",
+        "severity": "Low"
+      },
+      {
+        "id": "EC-004",
+        "description": "Rapid mutations (add/remove in quick succession): count remains accurate after all mutations settle.",
+        "severity": "Medium"
+      },
+      {
+        "id": "EC-005",
+        "description": "List filtered to zero: if list becomes empty due to client-side filtering, count shows '0' (though filtering is out of scope for this feature, the count should handle data changes gracefully).",
+        "severity": "Low"
+      }
+    ],
+    "test_guidance": {
+      "unit_testing": [
+        "Test that the count component renders with the correct number prop",
+        "Test that the count displays '0' when the list is empty",
+        "Test pluralization: '1 request' vs 'N requests'",
+        "Test that the count element has the correct ARIA attributes"
+      ],
+      "integration_testing": [
+        "Test that adding a request updates the count",
+        "Test that removing a request updates the count",
+        "Test that no extra network calls are made during count updates",
+        "Test component re-render behavior with count changes"
+      ],
+      "manual_testing": [
+        "Visual verification of count position and styling",
+        "Screen reader verification (VoiceOver, NVDA, or JAWS)",
+        "Verify count on page load with varying list sizes",
+        "Verify count updates after creating a new request via the UI"
+      ]
+    },
+    "definition_of_done": [
+      "All acceptance criteria (AC-001 through AC-008) pass",
+      "All GWT scenarios (GWT-001 through GWT-006) pass",
+      "Verification checks (VC-001 through VC-007) are executed and passing",
+      "Edge cases (EC-001 through EC-005) are reviewed and handled",
+      "Unit and integration tests are written and passing",
+      "Screen reader accessibility verified",
+      "Code reviewed and approved",
+      "Single PR containing all changes"
+    ],
+    "refined_epic_candidate": {
+      "title": "[Epic] Show Request Count",
+      "description": "Add a visible count of service requests above the list so platform engineers can quickly assess workload volume at a glance. This is a frontend-only enhancement that derives the count from the existing list data.",
+      "label": "epic",
+      "user_stories": [
+        {
+          "title": "[User Story] Show visible request count",
+          "description": "As a platform engineer, I want to see the total number of visible service requests so that I can quickly understand the current workload.",
+          "label": "user-story"
+        }
+      ]
+    },
+    "task_candidates": [
+      {
+        "title": "[Task] Add JSX count display",
+        "description": "Add a count display element (e.g., a paragraph or span showing the number of visible requests) above the ServiceRequestList component. Derive the count from the existing list data source (array length).",
+        "labels": ["task"],
+        "related_requirements": ["FR-001", "FR-002", "FR-003", "FR-004"],
+        "acceptance_criteria": ["AC-001", "AC-002", "AC-003", "AC-004", "AC-005"]
+      },
+      {
+        "title": "[Task] Add CSS styling for count element",
+        "description": "Add styling for the count display consistent with the existing design system. Ensure proper spacing, typography, and positioning above the list.",
+        "labels": ["task"],
+        "related_requirements": ["FR-004", "NFR-003"],
+        "acceptance_criteria": ["AC-005"]
+      },
+      {
+        "title": "[Task] Add accessibility support for count",
+        "description": "Add ARIA attributes (aria-live='polite', role='status') or use semantic HTML so screen readers announce the count and its updates. Ensure the count is accessible on load and on change.",
+        "labels": ["task"],
+        "related_requirements": ["FR-005"],
+        "acceptance_criteria": ["AC-006"]
+      },
+      {
+        "title": "[Task] Add unit and integration tests for count",
+        "description": "Write unit tests for count rendering, zero-state, pluralization, and ARIA attributes. Write integration tests for count updates on add/remove and verifying no extra network calls.",
+        "labels": ["task"],
+        "related_requirements": ["FR-001", "FR-002", "FR-003", "NFR-001", "NFR-004"],
+        "acceptance_criteria": ["AC-001", "AC-002", "AC-003", "AC-004", "AC-007", "AC-008"]
+      }
+    ]
+  },
+  "human_readable": "=== STAGE 2: ACCEPTANCE CRITERIA GENERATION ===\n\nBusiness Intent: Show Request Count\n\nAcceptance Criteria:\n- AC-001: Count displayed above request list\n- AC-002: Count updates when request added\n- AC-003: Count updates when request removed\n- AC-004: Zero state shows '0'\n- AC-005: Visual association with list\n- AC-006: Screen reader accessible\n- AC-007: No extra API calls\n- AC-008: Count always matches DOM\n\nGiven/When/Then Scenarios:\n- GWT-001: View count on page load\n- GWT-002: Count updates after adding request\n- GWT-003: Count updates after request removal\n- GWT-004: Zero state display\n- GWT-005: Screen reader announces count on load\n- GWT-006: Screen reader announces count change\n\nTask Candidates:\n1. [Task] Add JSX count display\n2. [Task] Add CSS styling for count element\n3. [Task] Add accessibility support for count\n4. [Task] Add unit and integration tests for count\n\nUser Story: As a platform engineer, I want to see the total number of visible service requests so that I can quickly understand the current workload.\n\nNext Stage: Solution Architecture (Stage 3)"
+}
