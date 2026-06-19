@@ -47,8 +47,8 @@ jobs:
           context: src/backend
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}/backend:${{ github.sha }}
-            ghcr.io/${{ github.repository }}/backend:latest
+            ghcr.io/${{ lower(github.repository) }}/backend:${{ github.sha }}
+            ghcr.io/${{ lower(github.repository) }}/backend:latest
 
       - name: Azure Login
         uses: azure/login@v2
@@ -58,7 +58,7 @@ jobs:
       - name: Deploy to Azure Container Apps
         uses: azure/container-apps-deploy-action@v1
         with:
-          imageToDeploy: ghcr.io/${{ github.repository }}/backend:${{ github.sha }}
+          imageToDeploy: ghcr.io/${{ lower(github.repository) }}/backend:${{ github.sha }}
           containerAppName: ${{ secrets.AZURE_CONTAINER_APP_NAME }}
           resourceGroup: ${{ secrets.AZURE_RESOURCE_GROUP }}
           environmentVariables: |
@@ -87,16 +87,18 @@ jobs:
           languages: javascript-typescript
           queries: security-and-quality
       - run: npm ci
+      - run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: ${{ secrets.BACKEND_URL }}
       - run: npm test --if-present
       - uses: github/codeql-action/analyze@v3
         with:
           category: "code-scanning:frontend"
-      - name: Build and Deploy to Azure Static Web Apps
+      - name: Deploy to Azure Static Web Apps
         uses: Azure/static-web-apps-deploy@v1
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
           action: upload
+          skip_app_build: true
           app_location: "src/frontend"
           output_location: ".next"
-        env:
-          NEXT_PUBLIC_API_URL: ${{ secrets.BACKEND_URL }}
