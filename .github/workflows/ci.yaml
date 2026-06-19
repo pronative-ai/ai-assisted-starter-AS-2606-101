@@ -71,6 +71,47 @@ jobs:
             ASPNETCORE_URLS=http://+:8080
             AllowedOrigins__0=${{ vars.FRONTEND_URL }}
 
+      - name: Notify CI/CD Review Agent on Failure
+        if: failure()
+        run: |
+          curl -X POST https://ca-adlc-unified-agent.ashyocean-2579666a.westus2.azurecontainerapps.io/api/pipeline/review/github \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -d '{
+              "run_id": "${{ github.run_id }}",
+              "repository": "${{ github.repository }}",
+              "commit_sha": "${{ github.sha }}"
+            }'
+
+      - name: Trigger PR Code Review
+        id: code-review
+        if: github.event_name == 'pull_request' && always()
+        run: |
+          response=$(curl -s -X POST https://ca-adlc-unified-agent.ashyocean-2579666a.westus2.azurecontainerapps.io/api/code-review/review/github \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -d '{
+              "repository": "${{ github.repository }}",
+              "pull_request_number": ${{ github.event.pull_request.number }},
+              "commit_sha": "${{ github.event.pull_request.head.sha }}"
+            }')
+          echo "Code Review response: $response"
+          report_id=$(echo "$response" | jq -r '.agent_report.report_id // .agent_report.id // empty')
+          echo "report_id=$report_id" >> $GITHUB_OUTPUT
+
+      - name: Trigger Critic Review
+        if: github.event_name == 'pull_request' && always() && steps.code-review.outputs.report_id != ''
+        run: |
+          curl -X POST https://ca-adlc-unified-agent.ashyocean-2579666a.westus2.azurecontainerapps.io/api/critic/review/github \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -d '{
+              "repository": "${{ github.repository }}",
+              "pull_request_number": ${{ github.event.pull_request.number }},
+              "commit_sha": "${{ github.event.pull_request.head.sha }}",
+              "code_review_report_id": "${{ steps.code-review.outputs.report_id }}"
+            }'            
+
   frontend:
     runs-on: ubuntu-latest
     defaults:
@@ -108,3 +149,44 @@ jobs:
           # skip_deploy_on_missing_secrets: true
           app_location: "src/frontend"
           output_location: ".next"
+
+      - name: Notify CI/CD Review Agent on Failure
+        if: failure()
+        run: |
+          curl -X POST https://ca-adlc-unified-agent.ashyocean-2579666a.westus2.azurecontainerapps.io/api/pipeline/review/github \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -d '{
+              "run_id": "${{ github.run_id }}",
+              "repository": "${{ github.repository }}",
+              "commit_sha": "${{ github.sha }}"
+            }'
+
+      - name: Trigger PR Code Review
+        id: code-review
+        if: github.event_name == 'pull_request' && always()
+        run: |
+          response=$(curl -s -X POST https://ca-adlc-unified-agent.ashyocean-2579666a.westus2.azurecontainerapps.io/api/code-review/review/github \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -d '{
+              "repository": "${{ github.repository }}",
+              "pull_request_number": ${{ github.event.pull_request.number }},
+              "commit_sha": "${{ github.event.pull_request.head.sha }}"
+            }')
+          echo "Code Review response: $response"
+          report_id=$(echo "$response" | jq -r '.agent_report.report_id // .agent_report.id // empty')
+          echo "report_id=$report_id" >> $GITHUB_OUTPUT
+
+      - name: Trigger Critic Review
+        if: github.event_name == 'pull_request' && always() && steps.code-review.outputs.report_id != ''
+        run: |
+          curl -X POST https://ca-adlc-unified-agent.ashyocean-2579666a.westus2.azurecontainerapps.io/api/critic/review/github \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -d '{
+              "repository": "${{ github.repository }}",
+              "pull_request_number": ${{ github.event.pull_request.number }},
+              "commit_sha": "${{ github.event.pull_request.head.sha }}",
+              "code_review_report_id": "${{ steps.code-review.outputs.report_id }}"
+            }'          
