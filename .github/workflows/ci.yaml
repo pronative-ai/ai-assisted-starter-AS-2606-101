@@ -66,6 +66,9 @@ jobs:
           imageToDeploy: ghcr.io/${{ steps.repo.outputs.repo }}/backend:${{ github.sha }}
           containerAppName: ${{ vars.AZURE_CONTAINER_APP_NAME }}
           resourceGroup: ${{ vars.AZURE_RESOURCE_GROUP }}
+          registryUrl: ghcr.io
+          registryUsername: ${{ github.actor }}
+          registryPassword: ${{ secrets.GHCR_PAT }}
           environmentVariables: |
             ASPNETCORE_ENVIRONMENT=Production
             ASPNETCORE_URLS=http://+:8080
