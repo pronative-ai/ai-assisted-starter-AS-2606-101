@@ -55,7 +55,7 @@ jobs:
             ghcr.io/${{ steps.repo.outputs.repo }}/backend:latest
 
       - name: Azure Login
-        uses: azure/login@v2
+        uses: azure/login@v3
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
@@ -63,12 +63,12 @@ jobs:
         uses: azure/container-apps-deploy-action@v1
         with:
           imageToDeploy: ghcr.io/${{ steps.repo.outputs.repo }}/backend:${{ github.sha }}
-          containerAppName: ${{ secrets.AZURE_CONTAINER_APP_NAME }}
-          resourceGroup: ${{ secrets.AZURE_RESOURCE_GROUP }}
+          containerAppName: ${{ vars.AZURE_CONTAINER_APP_NAME }}
+          resourceGroup: ${{ vars.AZURE_RESOURCE_GROUP }}
           environmentVariables: |
             ASPNETCORE_ENVIRONMENT=Production
             ASPNETCORE_URLS=http://+:8080
-            AllowedOrigins__0=${{ secrets.FRONTEND_URL }}
+            AllowedOrigins__0=${{ vars.FRONTEND_URL }}
 
   frontend:
     runs-on: ubuntu-latest
@@ -93,7 +93,7 @@ jobs:
       - run: npm ci
       - run: npm run build
         env:
-          NEXT_PUBLIC_API_URL: ${{ secrets.BACKEND_URL }}
+          NEXT_PUBLIC_API_URL: ${{ vars.BACKEND_URL }}
       - run: npm test --if-present
       - uses: github/codeql-action/analyze@v3
         with:
@@ -104,5 +104,6 @@ jobs:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
           action: upload
           skip_app_build: true
+          # skip_deploy_on_missing_secrets: true
           app_location: "src/frontend"
           output_location: ".next"
