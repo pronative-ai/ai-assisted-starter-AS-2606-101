@@ -34,6 +34,10 @@ jobs:
         with:
           category: "code-scanning:backend"
 
+      - name: Lowercase repository name
+        id: repo
+        run: echo "repo=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -47,8 +51,8 @@ jobs:
           context: src/backend
           push: true
           tags: |
-            ghcr.io/${{ lower(github.repository) }}/backend:${{ github.sha }}
-            ghcr.io/${{ lower(github.repository) }}/backend:latest
+            ghcr.io/${{ steps.repo.outputs.repo }}/backend:${{ github.sha }}
+            ghcr.io/${{ steps.repo.outputs.repo }}/backend:latest
 
       - name: Azure Login
         uses: azure/login@v2
@@ -58,7 +62,7 @@ jobs:
       - name: Deploy to Azure Container Apps
         uses: azure/container-apps-deploy-action@v1
         with:
-          imageToDeploy: ghcr.io/${{ lower(github.repository) }}/backend:${{ github.sha }}
+          imageToDeploy: ghcr.io/${{ steps.repo.outputs.repo }}/backend:${{ github.sha }}
           containerAppName: ${{ secrets.AZURE_CONTAINER_APP_NAME }}
           resourceGroup: ${{ secrets.AZURE_RESOURCE_GROUP }}
           environmentVariables: |
