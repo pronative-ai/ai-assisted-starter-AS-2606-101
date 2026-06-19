@@ -4,7 +4,7 @@
 ## Repository Context
 - Repository: pronative-ai/ai-assisted-student-AS-2606-101-ST-2606-1001
 - Program: AI-Assisted Phase 1
-- Student ID: 1001
+- Student ID: <Student Id>
 - Batch ID: 2606
 - Azure Resource Group: rg-as-2606-101-st-2606-1001
 
