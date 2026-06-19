@@ -1,12 +1,12 @@
 
-# GLOBAL TECHNICAL DESIGN - Sriganth
+# GLOBAL TECHNICAL DESIGN
 
 ## Repository Context
-- Repository: pronative-ai/ai-assisted-student-AS-2606-101-ST-2606-1001
+- Repository: pronative-ai/ai-assisted-student-AS-2606-101-ST-2606-<Student Id>
 - Program: AI-Assisted Phase 1
 - Student ID: <Student Id>
 - Batch ID: 2606
-- Azure Resource Group: rg-as-2606-101-st-2606-1001
+- Azure Resource Group: rg-as-2606-101-st-2606-<Student Id>
 
 ## Core Stack
 - Frontend: React / Vite or Next.js
